@@ -30,3 +30,6 @@ pydantic>=2.6
 
 # --- Config / utils ---
 pyyaml>=6.0
+# setuptools provides the distutils shim PySpark 3.5 needs on Python 3.12
+# (py3.12 removed stdlib distutils and venvs no longer seed setuptools).
+setuptools>=68

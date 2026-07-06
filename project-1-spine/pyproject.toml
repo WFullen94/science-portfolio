@@ -10,3 +10,11 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+    # PySpark 3.5 uses distutils LooseVersion on py3.12 — noise, not ours.
+    "ignore::DeprecationWarning:pyspark.*",
+    "ignore:distutils Version classes are deprecated:DeprecationWarning",
+]

@@ -8,17 +8,19 @@ project_name: spine-nids
 # NF-UNSW-NB15-v2 / NF-ToN-IoT-v2 / NF-CSE-CIC-IDS2018, so this pipeline
 # generalizes to the others by changing only this block.
 dataset:
-  name: NF-UNSW-NB15-v2
+  name: NF-ToN-IoT-v2
   # Ordered list of sources the downloader tries in turn (first hit wins).
-  # If all fail, ingest falls back to a schema-accurate synthetic sample so the
-  # pipeline is always runnable.
+  # These are public HuggingFace mirrors of the NetFlow-v2 standardized data.
+  # If all fail (offline), ingest falls back to a schema-accurate synthetic
+  # sample so the pipeline is always runnable.
   sources:
-    - kind: huggingface
-      repo_id: mhighlight/NF-UNSW-NB15-v2
-      filename: NF-UNSW-NB15-v2.csv
-    - kind: huggingface
-      repo_id: Bridge-Bridge/NF-UNSW-NB15-v2
-      filename: NF-UNSW-NB15-v2.parquet
+    - kind: huggingface_csv
+      repo_id: Nora9029/NF-ToN-IoT-v2
+      filename: NF-ToN-IoT-v2-train.csv
+  # Dev cap: stream only the first N rows over HTTP (fast, no 2.1GB download).
+  # Set to null for the full ~16.9M-flow dataset. The first 300k rows already
+  # carry a 64/36 attack/benign split across all 9 attack classes.
+  max_rows: 300000
   # Label columns present in NetFlow-v2 data.
   label_binary: Label        # 0 = benign, 1 = attack
   label_multiclass: Attack   # attack subclass name ('Benign' for normal)
@@ -29,6 +31,9 @@ dataset:
     - L4_SRC_PORT
     - L4_DST_PORT
   synthetic_fallback_rows: 60000
+
+  # To reproduce the roadmap's default NF-UNSW-NB15-v2 instead, swap the source
+  # above for that mirror — the v2 schema is identical, so nothing else changes.
 
 # --- Delta lakehouse layout (bronze/silver/gold) -----------------------------
 paths:
