@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Data + artifacts (never commit datasets or model binaries)
+**/data/
+!**/data/.gitkeep
+mlruns/
+mlartifacts/
+*.parquet
+*.csv
+*.zip
+*.gz
+*.pkl
+*.joblib
+*.pt
+*.onnx
+
+# Spark / Delta local warehouse
+spark-warehouse/
+metastore_db/
+derby.log
+
+# Env / secrets
+.env
+*.local
+
+# OS
+.DS_Store

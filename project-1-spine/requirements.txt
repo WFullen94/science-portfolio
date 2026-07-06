@@ -1,0 +1,32 @@
+# --- Core lakehouse stack (compatibility-critical: pin these together) ---
+pyspark==3.5.3
+delta-spark==3.2.1
+
+# --- Experiment tracking / registry ---
+mlflow>=2.17,<3
+
+# --- Modeling ---
+xgboost>=2.0
+scikit-learn>=1.4
+optuna>=3.6
+shap>=0.45
+
+# --- Data validation & drift ---
+great-expectations>=1.2,<2
+evidently>=0.4.40,<0.5
+
+# --- Data handling / download ---
+pandas>=2.1
+numpy>=1.26
+pyarrow>=15
+requests>=2.31
+tqdm>=4.66
+huggingface_hub>=0.24
+
+# --- Serving (light; kept in main env) ---
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+
+# --- Config / utils ---
+pyyaml>=6.0

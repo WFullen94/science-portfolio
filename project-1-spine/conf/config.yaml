@@ -1,0 +1,63 @@
+# Project 1 — The Spine: single source of truth for paths, dataset, and model config.
+# Everything downstream (ingest → features → train → serve → orchestrate) reads from here.
+
+project_name: spine-nids
+
+# --- Dataset -----------------------------------------------------------------
+# NetFlow-v2 standardized NIDS data. The v2 schema is shared across
+# NF-UNSW-NB15-v2 / NF-ToN-IoT-v2 / NF-CSE-CIC-IDS2018, so this pipeline
+# generalizes to the others by changing only this block.
+dataset:
+  name: NF-UNSW-NB15-v2
+  # Ordered list of sources the downloader tries in turn (first hit wins).
+  # If all fail, ingest falls back to a schema-accurate synthetic sample so the
+  # pipeline is always runnable.
+  sources:
+    - kind: huggingface
+      repo_id: mhighlight/NF-UNSW-NB15-v2
+      filename: NF-UNSW-NB15-v2.csv
+    - kind: huggingface
+      repo_id: Bridge-Bridge/NF-UNSW-NB15-v2
+      filename: NF-UNSW-NB15-v2.parquet
+  # Label columns present in NetFlow-v2 data.
+  label_binary: Label        # 0 = benign, 1 = attack
+  label_multiclass: Attack   # attack subclass name ('Benign' for normal)
+  # Identifier / leakage-prone columns dropped before modeling.
+  drop_columns:
+    - IPV4_SRC_ADDR
+    - IPV4_DST_ADDR
+    - L4_SRC_PORT
+    - L4_DST_PORT
+  synthetic_fallback_rows: 60000
+
+# --- Delta lakehouse layout (bronze/silver/gold) -----------------------------
+paths:
+  data_root: data
+  bronze: data/delta/bronze_flows      # raw ingested flows, as-landed
+  silver: data/delta/silver_flows      # cleaned + typed + validated
+  gold_train: data/delta/gold_train    # engineered features, train split
+  gold_test: data/delta/gold_test      # engineered features, test split
+  ge_root: data/great_expectations     # validation results
+  reports: data/reports                # SHAP, drift, eval artifacts
+
+# --- MLflow ------------------------------------------------------------------
+mlflow:
+  tracking_uri: file:./mlruns
+  experiment: spine-nids-xgboost
+  registered_model: spine-nids-detector
+
+# --- Train -------------------------------------------------------------------
+train:
+  target: Label
+  test_size: 0.2
+  random_state: 42
+  optuna_trials: 25
+  cv_folds: 3
+  # Promote a newly trained model to the 'staging' alias only if it clears this
+  # ROC-AUC bar on the held-out test set.
+  promote_min_roc_auc: 0.95
+
+# --- Drift / retraining (orchestration) --------------------------------------
+drift:
+  # Share of columns that must drift (Evidently) to trigger a retrain.
+  dataset_drift_threshold: 0.5
