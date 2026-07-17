@@ -47,7 +47,10 @@ paths:
 
 # --- MLflow ------------------------------------------------------------------
 mlflow:
-  tracking_uri: file:./mlruns
+  # SQLite backend so the Model Registry (versions + aliases) works locally;
+  # the file store's registry support is unreliable. Artifacts land in mlartifacts/.
+  tracking_uri: sqlite:///mlflow.db
+  artifact_location: mlartifacts
   experiment: spine-nids-xgboost
   registered_model: spine-nids-detector
 
@@ -58,6 +61,9 @@ train:
   random_state: 42
   optuna_trials: 25
   cv_folds: 3
+  # Subsample used only for the CV hyperparameter search (keeps the search fast);
+  # the final model is fit on the full train split.
+  optuna_sample_rows: 80000
   # Promote a newly trained model to the 'staging' alias only if it clears this
   # ROC-AUC bar on the held-out test set.
   promote_min_roc_auc: 0.95

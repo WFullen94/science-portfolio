@@ -76,10 +76,53 @@ ENGINEERED_FEATURES = [
     "TTL_RANGE", "RETRANS_RATE",
 ]
 
+# Deterministic model feature order: raw NetFlow-v2 features then engineered.
+# Matches feature_columns(gold) exactly (see README) so serving needs no Spark.
+MODEL_FEATURES = schema.NUMERIC_FEATURES + ENGINEERED_FEATURES
+
+
+def engineer_pandas(pdf):
+    """pandas twin of engineer() — same 10 features, for Spark-free serving.
+
+    Kept behaviourally identical to the Spark path; a parity test guards drift.
+    """
+    df = pdf.copy()
+
+    def sdiv(num, den):
+        den = den.mask(den == 0, 1.0)
+        return num / den
+
+    df["TOTAL_BYTES"] = df["IN_BYTES"] + df["OUT_BYTES"]
+    df["TOTAL_PKTS"] = df["IN_PKTS"] + df["OUT_PKTS"]
+    df["BYTES_PER_PKT_IN"] = sdiv(df["IN_BYTES"], df["IN_PKTS"])
+    df["BYTES_PER_PKT_OUT"] = sdiv(df["OUT_BYTES"], df["OUT_PKTS"])
+    df["BYTE_DIR_RATIO"] = sdiv(df["IN_BYTES"], df["OUT_BYTES"] + 1.0)
+    df["PKT_DIR_RATIO"] = sdiv(df["IN_PKTS"], df["OUT_PKTS"] + 1.0)
+    df["BYTES_PER_MS"] = sdiv(df["TOTAL_BYTES"], df["FLOW_DURATION_MILLISECONDS"] + 1.0)
+    df["PKT_SIZE_RANGE"] = df["MAX_IP_PKT_LEN"] - df["MIN_IP_PKT_LEN"]
+    df["TTL_RANGE"] = df["MAX_TTL"] - df["MIN_TTL"]
+    df["RETRANS_RATE"] = sdiv(
+        df["RETRANSMITTED_IN_PKTS"] + df["RETRANSMITTED_OUT_PKTS"], df["TOTAL_PKTS"]
+    )
+    return df
+
 
 def feature_columns(df: DataFrame) -> list[str]:
     """Model input columns = everything except the labels."""
     return [c for c in df.columns if c not in (schema.LABEL_BINARY, schema.LABEL_MULTICLASS)]
+
+
+def to_model_matrix(pdf, feats):
+    """pandas frame -> float32 model matrix, used by both train and serve.
+
+    Some raw NetFlow byte-rate columns (e.g. *_SECOND_BYTES) carry absurd finite
+    values that overflow to +/-inf when cast to float32. We map inf -> NaN and
+    let XGBoost handle NaN as missing, so train and inference stay consistent.
+    """
+    import numpy as np
+
+    X = pdf[feats].astype("float32")
+    return X.replace([np.inf, -np.inf], np.nan)
 
 
 def main() -> int:

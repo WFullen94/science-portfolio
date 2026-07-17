@@ -15,6 +15,7 @@ venv/
 !**/data/.gitkeep
 mlruns/
 mlartifacts/
+mlflow.db
 *.parquet
 *.csv
 *.zip
