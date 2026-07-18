@@ -1,0 +1,11 @@
+.venv/
+data/
+mlruns/
+mlartifacts/
+mlflow.db
+**/__pycache__/
+.pytest_cache/
+notebooks/
+tests/
+*.md
+!serving/model/**

@@ -1,7 +1,7 @@
 # Project 1 — The Spine. Run stages in order, or `make all`.
 # Assumes the venv is active (scripts/setup_env.sh) so JAVA_HOME + deps are set.
 
-.PHONY: setup ingest features train serve drift all clean test
+.PHONY: setup ingest features train serve drift all clean test export-model docker-build docker-run
 
 setup:          ## Create venv, install deps, wire JAVA_HOME
 	bash scripts/setup_env.sh
@@ -20,6 +20,15 @@ serve:          ## Serve the registered model (FastAPI on :8000)
 
 drift:          ## Evidently drift check -> emit retrain signal
 	python -m spine.drift
+
+export-model:   ## Export the promoted model into serving/model for baking
+	python scripts/export_model.py
+
+docker-build: export-model  ## Build the serving image (model baked in)
+	docker build -f docker/Dockerfile -t spine-nids-serve .
+
+docker-run:     ## Run the serving container on :8000
+	docker run --rm -p 8000:8000 spine-nids-serve
 
 all: ingest features train  ## Full offline pipeline (data -> registered model)
 

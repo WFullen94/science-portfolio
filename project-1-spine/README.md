@@ -54,6 +54,31 @@ dags/                Airflow DAG                                        [commit 
 docker/              Dockerfile for the serving image                   [commit 5]
 ```
 
+## Serving
+
+The endpoint loads the registered model **by alias** (`@staging`, else `@candidate`,
+else latest) and scores raw NetFlow-v2 flows — the request carries raw flow counters,
+the server applies the same feature engineering used in training (a pandas twin of the
+Spark path, guarded by a parity test) and returns a maliciousness probability + verdict.
+
+```bash
+make serve                 # uvicorn on :8000, loads model from the local registry
+curl -s localhost:8000/health
+curl -s localhost:8000/predict -H 'content-type: application/json' \
+  -d '{"flows":[{"IN_BYTES":4200,"IN_PKTS":48,"OUT_BYTES":300,"OUT_PKTS":4,"PROTOCOL":6,"TCP_FLAGS":22,"FLOW_DURATION_MILLISECONDS":12}]}'
+```
+
+Interactive docs at `/docs`. Verified on held-out data: **16/16 real flows** classified
+correctly (attacks ≈0.998, benign <0.08).
+
+**Containerized serving** bakes the promoted model into the image (no MLflow server needed
+at runtime — `serve.py` loads it from `SPINE_MODEL_PATH`):
+
+```bash
+make docker-build          # export @staging model -> serving/model, then docker build
+make docker-run            # serve the container on :8000
+```
+
 ## Managed-platform equivalents
 
 Built OSS-first to show the mechanics; the Databricks-native mapping:

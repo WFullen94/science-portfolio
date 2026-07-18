@@ -1,7 +1,12 @@
 """Feature-engineering transform tests (PySpark)."""
 
 from spine import schema
-from spine.features import ENGINEERED_FEATURES, engineer, feature_columns
+from spine.features import (
+    ENGINEERED_FEATURES,
+    engineer,
+    engineer_pandas,
+    feature_columns,
+)
 
 
 def _tiny_silver(spark):
@@ -46,3 +51,16 @@ def test_feature_columns_excludes_labels(spark):
     feats = feature_columns(gold)
     assert schema.LABEL_BINARY not in feats
     assert schema.LABEL_MULTICLASS not in feats
+
+
+def test_spark_pandas_feature_parity(spark):
+    """The Spark and pandas feature engineering must agree — serving relies on
+    the pandas twin producing the same values the model trained on."""
+    silver = _tiny_silver(spark)
+    spark_gold = {r.asDict()[schema.LABEL_MULTICLASS]: r.asDict()
+                  for r in engineer(silver).collect()}
+    pdf_gold = engineer_pandas(silver.toPandas()).set_index(schema.LABEL_MULTICLASS)
+
+    for key in spark_gold:
+        for col in ENGINEERED_FEATURES:
+            assert abs(spark_gold[key][col] - pdf_gold.loc[key, col]) < 1e-9, col
