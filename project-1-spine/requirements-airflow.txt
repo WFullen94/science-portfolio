@@ -1,0 +1,9 @@
+# Airflow is installed in its OWN venv (its pins conflict with the main stack).
+# The DAG file imports only stdlib + Airflow, so the scheduler env needs only this;
+# the pipeline stages run in the main .venv via BashOperator.
+#
+#   python3.12 -m venv .venv-airflow
+#   .venv-airflow/bin/pip install -r requirements-airflow.txt \
+#     --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.3/constraints-3.12.txt"
+#
+apache-airflow==2.10.3

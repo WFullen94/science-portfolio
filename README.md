@@ -10,7 +10,7 @@ defensive/analytic (intrusion *detection*, telemetry analysis, CTI document work
 
 | # | Name | Status | Resume claim |
 |---|------|--------|--------------|
-| 1 | [The Spine](project-1-spine/) — end-to-end ML on a lakehouse pattern | 🚧 building | Versioned data → tracked experiments → registered model → real-time endpoint → orchestrated retraining with data-validation gates and drift triggers |
+| 1 | [The Spine](project-1-spine/) — end-to-end ML on a lakehouse pattern | ✅ complete | Versioned data → tracked experiments → registered model → real-time endpoint → orchestrated retraining with data-validation gates and drift triggers |
 | 3 | RAG + Ragas over MITRE ATT&CK | ⬜ planned | — |
 | 4 | Multi-tool threat-investigation agent + agent eval | ⬜ planned | — |
 | 5 | Probabilistic / conformal uncertainty on detection | ⬜ planned | — |

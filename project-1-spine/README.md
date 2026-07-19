@@ -79,6 +79,26 @@ make docker-build          # export @staging model -> serving/model, then docker
 make docker-run            # serve the container on :8000
 ```
 
+## Orchestration + drift-triggered retraining
+
+An Airflow DAG ([dags/spine_pipeline.py](dags/spine_pipeline.py)) runs the pipeline on a
+schedule with a **drift-triggered retraining path**:
+
+```
+ingest -> drift_check -> [drift?] --yes--> retrain_features -> retrain_train -> done
+                                 --no---> skip_retrain ------------------------^
+```
+
+`spine.drift` (Evidently) compares the current feature distribution against the training
+reference; if the share of drifted columns crosses `drift.dataset_drift_threshold`, it
+writes a retrain signal the DAG branches on. Verified both ways: train-vs-test share
+**0.33 → skip**, simulated drift **0.59 → retrain** (`SPINE_DRIFT_SIMULATE=1`).
+
+Each stage runs as a `BashOperator` calling `python -m spine.<stage>` in the main venv, so
+the DAG file imports only stdlib + Airflow (the heavy stack stays on the worker). Airflow
+lives in its own venv — see [requirements-airflow.txt](requirements-airflow.txt). The DAG
+is validated by a DagBag parse (zero import errors, 7 tasks, branch topology intact).
+
 ## Managed-platform equivalents
 
 Built OSS-first to show the mechanics; the Databricks-native mapping:

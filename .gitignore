@@ -6,7 +6,11 @@ __pycache__/
 build/
 dist/
 .venv/
+.venv*/
 venv/
+airflow.cfg
+airflow.db
+logs/
 .pytest_cache/
 .ipynb_checkpoints/
 

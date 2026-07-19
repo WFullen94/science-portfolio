@@ -30,6 +30,11 @@ docker-build: export-model  ## Build the serving image (model baked in)
 docker-run:     ## Run the serving container on :8000
 	docker run --rm -p 8000:8000 spine-nids-serve
 
+dag-validate:   ## Parse the Airflow DAG (zero import errors) in the airflow venv
+	AIRFLOW__CORE__LOAD_EXAMPLES=False .venv-airflow/bin/python -c \
+	  "from airflow.models import DagBag; d=DagBag('dags',include_examples=False); \
+	   print('import errors:', d.import_errors or 'none'); assert not d.import_errors"
+
 all: ingest features train  ## Full offline pipeline (data -> registered model)
 
 test:
