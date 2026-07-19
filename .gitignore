@@ -16,7 +16,7 @@ venv/
 mlruns/
 mlartifacts/
 mlflow.db
-serving/model/
+**/serving/model/
 *.parquet
 *.csv
 *.zip
