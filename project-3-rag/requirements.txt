@@ -1,0 +1,29 @@
+# --- RAG orchestration ---
+langchain>=0.3,<0.4
+langchain-community>=0.3,<0.4
+langchain-huggingface>=0.1
+langchain-text-splitters>=0.3
+
+# --- Embeddings + reranking (bi-encoder + cross-encoder) ---
+sentence-transformers>=3.0      # pulls torch + transformers (also our DL foundation)
+
+# --- Vector store ---
+faiss-cpu>=1.8
+
+# --- RAG evaluation ---
+ragas>=0.2,<0.3
+datasets>=2.19
+
+# --- Corpus ingest ---
+requests>=2.31
+tqdm>=4.66
+
+# --- Serving + config ---
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+pyyaml>=6.0
+pytest>=8.0
+
+# LLM backend (generation + Ragas judge) is added at the generation stage —
+# either a local server (Ollama) or an API (Anthropic/OpenAI).
