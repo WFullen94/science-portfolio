@@ -16,6 +16,10 @@ faiss-cpu>=1.8
 ragas>=0.2,<0.3
 datasets>=2.19
 
+# --- Tracing / observability (Phoenix) ---
+arize-phoenix>=5.0
+openinference-instrumentation-langchain>=0.1
+
 # --- Corpus ingest ---
 requests>=2.31
 tqdm>=4.66

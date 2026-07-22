@@ -12,7 +12,7 @@ corpus:
 paths:
   documents: data/documents.jsonl      # one JSON doc per ATT&CK technique
   faiss_index: data/faiss_index        # persisted FAISS vector store
-  eval_set: data/eval_set.jsonl        # question/ground-truth pairs for Ragas
+  eval_set: eval/attack_questions.jsonl  # curated question/reference pairs (version-controlled)
   reports: data/reports                # Ragas + eval outputs
 
 # --- Embeddings (bi-encoder) -------------------------------------------------

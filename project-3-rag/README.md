@@ -46,6 +46,35 @@ src/rag/
 cd project-3-rag
 python3.12 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt && pip install -e .
-python -m rag.ingest      # download + parse ATT&CK
-python -m rag.index       # build the FAISS index
+
+# Local LLM backend (default): install Ollama, then
+ollama pull llama3.1:8b
+
+python -m rag.ingest      # download + parse ATT&CK  -> 697 technique docs
+python -m rag.index       # chunk + embed + FAISS    -> 1,820 vectors
+python -m rag.chain "How do adversaries dump credentials from LSASS?"   # ask it
+python -m rag.evaluate    # Ragas: faithfulness + context precision/recall
+uvicorn rag.serve:app --port 8000                                       # serve
+RAG_TRACING=1 uvicorn rag.serve:app --port 8000                         # + Phoenix traces
 ```
+
+## Evaluation (the part that matters)
+
+`rag.evaluate` runs the chain over a curated question set
+([eval/attack_questions.jsonl](eval/attack_questions.jsonl)) and scores it with **Ragas**:
+
+| Metric | Measures | Diagnoses |
+|--------|----------|-----------|
+| Faithfulness | is the answer grounded in retrieved context? | **generator** (hallucination) |
+| Response relevancy | does the answer address the question? | **generator** |
+| Context precision | are relevant chunks retrieved + ranked high? | **retriever** |
+| Context recall | did retrieval fetch everything the reference needs? | **retriever** |
+
+Splitting retriever vs generator metrics tells you *which component to fix* — not just a score.
+The LLM judge is the same pluggable backend as generation.
+
+## Serving + tracing
+
+`rag.serve` exposes `POST /query` (grounded answer + cited technique IDs) and `/health`, `/docs`.
+Setting `RAG_TRACING=1` turns on **Phoenix** tracing — every retrieval and LLM call becomes an
+OpenTelemetry span, so any single answer can be inspected end to end (which chunks, which prompt).
