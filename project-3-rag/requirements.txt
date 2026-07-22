@@ -1,8 +1,10 @@
-# --- RAG orchestration ---
+# --- RAG orchestration (keep the whole langchain stack on core 0.3.x) ---
 langchain>=0.3,<0.4
+langchain-core>=0.3.85,<1.0
 langchain-community>=0.3,<0.4
-langchain-huggingface>=0.1
+langchain-huggingface>=0.1,<0.4
 langchain-text-splitters>=0.3
+langchain-ollama<0.3          # local LLM backend; <0.3 stays on core 0.3.x
 
 # --- Embeddings + reranking (bi-encoder + cross-encoder) ---
 sentence-transformers>=3.0      # pulls torch + transformers (also our DL foundation)
