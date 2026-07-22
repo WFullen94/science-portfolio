@@ -8,7 +8,10 @@ one project shipped before the next is opened. Derived from
 
 - ✅ **P1 — The Spine** — end-to-end NIDS ML lifecycle (Delta → PySpark → XGBoost/Optuna/MLflow
   → SHAP → FastAPI/Docker → Airflow + Evidently drift). *Shipped.*
-- 🚧 **P3 — RAG over MITRE ATT&CK** — *in progress (next).*
+- ✅ **P3 — RAG over MITRE ATT&CK** — ingest → FAISS → two-stage retrieval (bi-encoder +
+  cross-encoder) → grounded generation (local Ollama) → Ragas eval → FastAPI + Phoenix tracing.
+  *Shipped.* Ragas: context precision 1.00 / recall 0.98 (retriever), faithfulness 0.77.
+- 🚧 **CI/CD (GitHub Actions)** — *next (fold-in over P1 + P3).*
 
 ## Sequence
 

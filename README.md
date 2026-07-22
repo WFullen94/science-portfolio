@@ -11,7 +11,7 @@ defensive/analytic (intrusion *detection*, telemetry analysis, CTI document work
 | # | Name | Status | Resume claim |
 |---|------|--------|--------------|
 | 1 | [The Spine](project-1-spine/) — end-to-end ML on a lakehouse pattern | ✅ complete | Versioned data → tracked experiments → registered model → real-time endpoint → orchestrated retraining with data-validation gates and drift triggers |
-| 3 | RAG + Ragas over MITRE ATT&CK | ⬜ planned | — |
+| 3 | [RAG + Ragas over MITRE ATT&CK](project-3-rag/) | ✅ complete | Built *and rigorously evaluated* a RAG system over CTI — two-stage retrieval (bi-encoder + cross-encoder rerank), grounded generation, Ragas metrics (faithfulness + context precision/recall) that separate retriever from generator quality, served + traced |
 | 4 | Multi-tool threat-investigation agent + agent eval | ⬜ planned | — |
 | 5 | Probabilistic / conformal uncertainty on detection | ⬜ planned | — |
 | 6 | LoRA/QLoRA fine-tune: CTI → ATT&CK (conditional) | ⬜ planned | — |
