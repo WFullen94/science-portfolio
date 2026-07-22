@@ -12,9 +12,14 @@ import sys
 from functools import lru_cache
 
 from langchain_core.prompts import ChatPromptTemplate
+from opentelemetry import trace
 
 from rag.config import load_config
 from rag.retrieve import format_context, get_retriever
+
+# No-op tracer unless a provider is registered (rag.tracing.start_tracing);
+# when tracing is on, this yields a rag.query -> rag.retrieve + LLM span tree.
+_tracer = trace.get_tracer("rag")
 
 SYSTEM = (
     "You are a cyber threat intelligence analyst. Answer the question using ONLY "
@@ -54,17 +59,23 @@ class RagChain:
         ])
 
     def invoke(self, question: str) -> dict:
-        docs = self.retriever.retrieve(question)
-        messages = self.prompt.format_messages(
-            context=format_context(docs), question=question
-        )
-        response = self.llm.invoke(messages)
-        return {
-            "question": question,
-            "answer": response.content,
-            "contexts": [d.page_content for d in docs],
-            "source_techniques": [d.metadata.get("technique_id") for d in docs],
-        }
+        with _tracer.start_as_current_span("rag.query") as span:
+            span.set_attribute("rag.question", question)
+            with _tracer.start_as_current_span("rag.retrieve") as rspan:
+                docs = self.retriever.retrieve(question)
+                rspan.set_attribute("rag.n_retrieved", len(docs))
+            messages = self.prompt.format_messages(
+                context=format_context(docs), question=question
+            )
+            response = self.llm.invoke(messages)  # LLM span nests here when traced
+            techniques = [d.metadata.get("technique_id") for d in docs]
+            span.set_attribute("rag.source_techniques", ",".join(t for t in techniques if t))
+            return {
+                "question": question,
+                "answer": response.content,
+                "contexts": [d.page_content for d in docs],
+                "source_techniques": techniques,
+            }
 
 
 @lru_cache(maxsize=1)
