@@ -19,6 +19,13 @@ defensive/analytic (intrusion *detection*, telemetry analysis, CTI document work
 
 Build order follows the roadmap: **P1 → P3 → P4 → P5 → (P6) → P7**. Ship each before opening the next.
 
+## Continuous integration
+
+Path-filtered GitHub Actions workflows ([.github/workflows/](.github/workflows/)) run each project's
+test suite on push/PR — P1's Great Expectations validation gate + PySpark transforms, P3's
+model-free tests (STIX parsing, chain wiring, eval-set integrity). They activate once the repo is
+pushed to GitHub; the underlying test commands are verified locally.
+
 ## Philosophy
 
 OSS-first, runs locally. Prove you understand what the managed platform does for you by building the

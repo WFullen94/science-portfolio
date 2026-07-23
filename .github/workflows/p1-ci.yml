@@ -1,0 +1,41 @@
+name: P1 Spine CI
+
+# Runs only when the Spine project (or this workflow) changes.
+on:
+  push:
+    paths: ['project-1-spine/**', '.github/workflows/p1-ci.yml']
+  pull_request:
+    paths: ['project-1-spine/**', '.github/workflows/p1-ci.yml']
+
+defaults:
+  run:
+    working-directory: project-1-spine
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: project-1-spine/requirements.txt
+
+      # PySpark / Delta need a JDK.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          pip install -e .
+
+      # Exercises the Great Expectations validation gate + the PySpark
+      # feature-engineering transforms (incl. the div-by-zero guard).
+      - name: Run tests
+        run: pytest -q
