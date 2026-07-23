@@ -1,0 +1,8 @@
+{"question": "What is the CVSS severity of CVE-2021-44228?", "expected_tool": "cve_lookup", "expected_contains": ["CVE-2021-44228"]}
+{"question": "How do adversaries dump credentials from LSASS process memory?", "expected_tool": "attack_search", "expected_contains": ["T1003.001"]}
+{"question": "Map this single observed behavior to one ATT&CK technique: the Windows event logs were cleared to hide activity.", "expected_tool": "map_indicator_to_technique", "expected_contains": ["T1070"]}
+{"question": "Look up CVE-2014-0160 and tell me what it is.", "expected_tool": "cve_lookup", "expected_contains": ["CVE-2014-0160"]}
+{"question": "What technique describes sending spearphishing emails with malicious attachments?", "expected_tool": "attack_search", "expected_contains": ["T1566"]}
+{"question": "Classify this single indicator into one ATT&CK technique: a scheduled task was created that runs a payload at user logon.", "expected_tool": "map_indicator_to_technique", "expected_contains": ["T1053"]}
+{"question": "How severe is CVE-2017-0144 and what does it affect?", "expected_tool": "cve_lookup", "expected_contains": ["CVE-2017-0144"]}
+{"question": "How do adversaries encrypt data for impact in ransomware operations?", "expected_tool": "attack_search", "expected_contains": ["T1486"]}
