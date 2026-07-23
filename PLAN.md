@@ -15,7 +15,9 @@ one project shipped before the next is opened. Derived from
 - ✅ **P4 — Threat-investigation agent** — 3 tools (ATT&CK retriever + live NVD CVE lookup +
   technique mapping) → LangGraph ReAct agent → agent eval (tool-selection 1.0 / trajectory 1.0 /
   completion 0.875) → Phoenix tracing. *Shipped.*
-- 🚧 **Graph ML / GNN on ATT&CK** — *next.*
+- ✅ **Graph ML / GNN on ATT&CK** — GraphSAGE link prediction (PyG): predicts group→technique
+  edges, ROC-AUC 0.908 held-out, with a threat-group TTP-prediction demo. *Shipped.*
+- 🚧 **P5 — Uncertainty (Bayesian + conformal)** — *next.*
 
 ## Sequence
 
