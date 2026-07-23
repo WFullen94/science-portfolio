@@ -6,6 +6,7 @@ on:
     paths: ['project-1-spine/**', '.github/workflows/p1-ci.yml']
   pull_request:
     paths: ['project-1-spine/**', '.github/workflows/p1-ci.yml']
+  workflow_dispatch:  # allow manual runs
 
 defaults:
   run:

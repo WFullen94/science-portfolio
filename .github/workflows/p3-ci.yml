@@ -5,6 +5,7 @@ on:
     paths: ['project-3-rag/**', '.github/workflows/p3-ci.yml']
   pull_request:
     paths: ['project-3-rag/**', '.github/workflows/p3-ci.yml']
+  workflow_dispatch:  # allow manual runs
 
 defaults:
   run:
