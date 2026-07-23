@@ -1,0 +1,9 @@
+# Causal inference: does MFA reduce account compromise? (observational -> ATE)
+dowhy>=0.11          # model -> identify -> estimate -> refute workflow
+pandas>=2.1
+numpy>=1.26
+scikit-learn>=1.4    # propensity model
+statsmodels>=0.14    # regression adjustment
+matplotlib>=3.8
+pyyaml>=6.0
+pytest>=8.0

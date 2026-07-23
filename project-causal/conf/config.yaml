@@ -1,0 +1,32 @@
+# Causal question: does enabling MFA reduce account compromise?
+# We SIMULATE with a known effect + confounding so we have ground truth to check
+# our estimators against. Coefficients are on the logit scale.
+
+project_name: causal-mfa
+
+confounders: [risk, tenure, prior_incidents]
+treatment: mfa
+outcome: compromised
+
+simulation:
+  n: 8000
+  seed: 42
+
+  # P(MFA=1) — orgs enable MFA more on risky accounts (this is the confounding).
+  treatment_assignment:
+    intercept: -0.2
+    risk: 1.5            # strong: high-risk accounts get MFA (confounder -> treatment)
+    prior_incidents: 0.6
+    tenure: -0.3
+
+  # P(compromise) — risk also drives compromise (confounder -> outcome).
+  outcome:
+    intercept: -1.0
+    risk: 1.2
+    prior_incidents: 0.5
+    tenure: -0.2
+    mfa_effect_logit: -1.1   # THE causal effect: MFA lowers log-odds of compromise
+
+paths:
+  data: data/mfa_sim.csv
+  reports: data/reports
