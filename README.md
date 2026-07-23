@@ -1,5 +1,8 @@
 # Science Portfolio — Applied Scientist (Databricks Public Sector)
 
+[![P1 Spine CI](https://github.com/WFullen94/science-portfolio/actions/workflows/p1-ci.yml/badge.svg)](https://github.com/WFullen94/science-portfolio/actions/workflows/p1-ci.yml)
+[![P3 RAG CI](https://github.com/WFullen94/science-portfolio/actions/workflows/p3-ci.yml/badge.svg)](https://github.com/WFullen94/science-portfolio/actions/workflows/p3-ci.yml)
+
 Defensible, end-to-end artifacts built against the plan in
 [Applied Scientist Roadmap.md](Applied%20Scientist%20Roadmap.md).
 
