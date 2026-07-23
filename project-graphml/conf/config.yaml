@@ -1,0 +1,31 @@
+# Graph ML on MITRE ATT&CK — link prediction (which techniques does a group use?).
+
+project_name: attack-graphml
+
+corpus:
+  stix_url: https://raw.githubusercontent.com/mitre-attack/attack-stix-data/master/enterprise-attack/enterprise-attack.json
+  cache: data/enterprise-attack.json
+
+paths:
+  graph: data/attack_graph.pt
+  model: data/gnn_link.pt
+  reports: data/reports
+
+graph:
+  # We PREDICT group -uses-> technique edges. software/sub-technique edges are
+  # kept as auxiliary structure (message passing) but never used as labels.
+  val_frac: 0.10
+  test_frac: 0.10
+  seed: 42
+
+model:
+  embed_dim: 128        # learnable per-node input embedding
+  hidden_dim: 128
+  num_layers: 2         # 2 hops: a group "sees" other groups using the same techniques
+  dropout: 0.3
+
+train:
+  epochs: 120
+  lr: 0.01
+  weight_decay: 0.0005
+  seed: 42

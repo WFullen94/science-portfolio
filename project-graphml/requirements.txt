@@ -1,0 +1,8 @@
+# Graph ML on the MITRE ATT&CK knowledge graph.
+torch>=2.2
+torch-geometric>=2.5
+scikit-learn>=1.4      # ROC-AUC / average-precision for link prediction
+numpy>=1.26
+requests>=2.31         # ATT&CK STIX download
+pyyaml>=6.0
+pytest>=8.0
