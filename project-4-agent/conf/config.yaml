@@ -1,0 +1,16 @@
+# Project 4 — Threat-investigation agent. Reuses the P3 ATT&CK retriever.
+
+project_name: attack-agent
+
+agent:
+  model: llama3.1:8b        # local Ollama; must support tool calling
+  temperature: 0.0
+  max_iterations: 6         # cap agent planning loops
+
+nvd:
+  api_url: https://services.nvd.nist.gov/rest/json/cves/2.0
+  timeout: 25               # NVD is rate-limited without an API key
+
+paths:
+  reports: data/reports
+  eval_set: eval/agent_tasks.jsonl

@@ -1,0 +1,10 @@
+# Project 4 shares Project 3's environment (same local LLM + ATT&CK retriever).
+# From an activated project-3-rag/.venv:
+#
+#   pip install -r ../project-4-agent/requirements.txt
+#   pip install -e ../project-3-rag   # the `rag` package (retriever)
+#   pip install -e ../project-4-agent
+#
+langgraph>=0.2,<0.4
+requests>=2.31
+pyyaml>=6.0
