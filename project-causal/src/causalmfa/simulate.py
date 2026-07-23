@@ -23,7 +23,8 @@ def _sigmoid(x):
     return 1.0 / (1.0 + np.exp(-x))
 
 
-def simulate(cfg) -> tuple[pd.DataFrame, dict]:
+def _generate(cfg) -> dict:
+    """The full data-generating process, including potential outcomes."""
     s = cfg["simulation"]
     rng = np.random.default_rng(s["seed"])
     n = s["n"]
@@ -49,12 +50,23 @@ def simulate(cfg) -> tuple[pd.DataFrame, dict]:
     u = rng.uniform(0, 1, n)
     y0 = (u < p0).astype(int)
     y1 = (u < p1).astype(int)
-
     compromised = np.where(mfa == 1, y1, y0)
+    return {"risk": risk, "tenure": tenure, "prior_incidents": prior_incidents,
+            "mfa": mfa, "compromised": compromised,
+            "p0": p0, "p1": p1, "y0": y0, "y1": y1}
 
+
+def potential_outcomes_frame(cfg) -> pd.DataFrame:
+    """Full frame incl. potential outcomes — for validation/analysis only."""
+    return pd.DataFrame(_generate(cfg))
+
+
+def simulate(cfg) -> tuple[pd.DataFrame, dict]:
+    g = _generate(cfg)
+    y0, y1 = g["y0"], g["y1"]
     df = pd.DataFrame({
-        "risk": risk, "tenure": tenure, "prior_incidents": prior_incidents,
-        "mfa": mfa, "compromised": compromised,
+        "risk": g["risk"], "tenure": g["tenure"], "prior_incidents": g["prior_incidents"],
+        "mfa": g["mfa"], "compromised": g["compromised"],
     })
 
     true_ate = float(y1.mean() - y0.mean())
@@ -65,7 +77,7 @@ def simulate(cfg) -> tuple[pd.DataFrame, dict]:
         "naive_ate": round(naive_ate, 4),
         "naive_bias": round(naive_ate - true_ate, 4),
         "treated_frac": round(float(df.mfa.mean()), 4),
-        "n": n,
+        "n": len(df),
     }
     return df, truth
 
