@@ -33,13 +33,31 @@ pip install -r ../project-4-agent/requirements.txt
 pip install -e ../project-3-rag ../project-4-agent
 ```
 
+## Evaluation results (local llama3.1:8b, 8 curated tasks)
+
+| Metric | Score |
+|--------|-------|
+| Tool-selection accuracy | **1.00** — always chose the right tool |
+| Trajectory validity | **1.00** — clean single-tool paths, no looping |
+| Task completion | **0.875** — one miss, traced to the mapping *tool's* retrieval, not the agent's planning |
+
+That decomposition is the point: agent eval separates *planning* quality from *tool* quality.
+Run `python -m agent.evaluate`; per-task detail lands in `data/reports/agent_eval.json`.
+
+## Tracing
+
+`AGENT_TRACING=1` turns on Phoenix. A single run produces the full trajectory as a span tree —
+`LangGraph → agent → call_model (ChatOllama) → should_continue → tools → <tool> → …` — so you can
+see exactly which tool the agent picked and what it observed.
+
 ## Layout
 
 ```
 conf/config.yaml        model, NVD API, eval paths
 src/agent/
   tools.py              the 3 tools (ATT&CK search, NVD CVE lookup, technique mapping)
-  graph.py              LangGraph agent wiring                         [next]
-  evaluate.py           agent eval: tool-selection + trajectory        [next]
-eval/agent_tasks.jsonl  curated tasks with expected tool + answer      [next]
+  graph.py              LangGraph ReAct agent + investigate() (returns trajectory)
+  evaluate.py           agent eval: tool-selection + trajectory + completion
+  tracing.py            Phoenix instrumentation (shared with P3)
+eval/agent_tasks.jsonl  curated tasks with expected tool + answer
 ```

@@ -8,6 +8,7 @@ that's what the agent evaluation scores, not just the final text.
 
 from __future__ import annotations
 
+import os
 import sys
 from functools import lru_cache
 
@@ -63,6 +64,9 @@ def investigate(question: str) -> dict:
 
 
 def main() -> int:
+    if os.environ.get("AGENT_TRACING") == "1":
+        from agent.tracing import start_tracing
+        start_tracing()
     q = " ".join(sys.argv[1:]) or "What is CVE-2021-44228 and which ATT&CK technique would exploiting it enable?"
     out = investigate(q)
     print(f"Q: {out['question']}\n")
