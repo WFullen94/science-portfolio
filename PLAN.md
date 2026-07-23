@@ -12,7 +12,10 @@ one project shipped before the next is opened. Derived from
   cross-encoder) → grounded generation (local Ollama) → Ragas eval → FastAPI + Phoenix tracing.
   *Shipped.* Ragas: context precision 1.00 / recall 0.98 (retriever), faithfulness 0.77.
 - ✅ **CI/CD (GitHub Actions)** — path-filtered workflows run each project's tests on push. *Shipped.*
-- 🚧 **P4 — Threat-investigation agent** — *next.*
+- ✅ **P4 — Threat-investigation agent** — 3 tools (ATT&CK retriever + live NVD CVE lookup +
+  technique mapping) → LangGraph ReAct agent → agent eval (tool-selection 1.0 / trajectory 1.0 /
+  completion 0.875) → Phoenix tracing. *Shipped.*
+- 🚧 **Graph ML / GNN on ATT&CK** — *next.*
 
 ## Sequence
 
