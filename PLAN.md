@@ -17,7 +17,10 @@ one project shipped before the next is opened. Derived from
   completion 0.875) → Phoenix tracing. *Shipped.*
 - ✅ **Graph ML / GNN on ATT&CK** — GraphSAGE link prediction (PyG): predicts group→technique
   edges, ROC-AUC 0.908 held-out, with a threat-group TTP-prediction demo. *Shipped.*
-- 🚧 **P5 — Uncertainty (Bayesian + conformal)** — *next.*
+- ⏸️ **P5 — Uncertainty (Bayesian + conformal)** — deferred by request; circle back later.
+- ✅ **Causal inference** — MFA→compromise: naive estimate flips sign under confounding; recovered
+  the true ATE (regression/IPW/AIPW/DoWhy) + refutations + T-learner CATE. *Shipped.*
+- 🚧 **P6 — LoRA fine-tuning** — *next*, then **Structured-Data DL**.
 
 ## Sequence
 
