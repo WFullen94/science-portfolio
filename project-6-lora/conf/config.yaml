@@ -1,0 +1,35 @@
+# LoRA fine-tuning: classify CTI "procedure" text into ATT&CK techniques.
+
+project_name: cti-lora
+
+corpus:
+  stix_url: https://raw.githubusercontent.com/mitre-attack/attack-stix-data/master/enterprise-attack/enterprise-attack.json
+  cache: data/enterprise-attack.json
+
+dataset:
+  top_k_techniques: 20     # keep the K most frequent techniques (tractable classification)
+  min_examples: 25         # a technique needs at least this many procedure examples
+  test_size: 0.2
+  seed: 42
+  max_length: 256
+
+paths:
+  data: data/cti_dataset.csv
+  label_map: data/label_map.json
+  reports: data/reports
+
+model:
+  name: distilbert-base-uncased
+  epochs: 5
+  batch_size: 16
+  lr: 0.0003
+
+lora:
+  r: 8
+  alpha: 16
+  dropout: 0.1
+  target_modules: [q_lin, v_lin]   # DistilBERT attention projections
+
+mlflow:
+  tracking_uri: sqlite:///mlflow.db
+  experiment: cti-lora

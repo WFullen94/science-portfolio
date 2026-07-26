@@ -1,0 +1,13 @@
+# LoRA fine-tuning: CTI procedure text -> ATT&CK technique classification.
+torch>=2.2
+transformers>=4.44
+peft>=0.12          # LoRA / parameter-efficient fine-tuning
+datasets>=2.19
+accelerate>=0.33
+scikit-learn>=1.4   # metrics + stratified split
+mlflow>=2.17,<3     # experiment tracking (before/after)
+numpy>=1.26
+pandas>=2.1
+requests>=2.31      # ATT&CK STIX download
+pyyaml>=6.0
+pytest>=8.0
