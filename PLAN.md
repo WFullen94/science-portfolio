@@ -23,6 +23,10 @@ one project shipped before the next is opened. Derived from
 - ✅ **P6 — LoRA fine-tuning** — CTI→ATT&CK technique classification; linear-probe 60% vs LoRA 92%
   accuracy training 1.1% of params (DistilBERT + PEFT), MLflow-tracked. *Shipped.*
 - 🚧 **Structured-Data DL** — *next*: tabular + time-series transformers, distributed (DDP→FSDP).
+- 🟡 **DPO / RLHF (extends P6)** — *added, gated*: preference-tune the P6 model. Feasible here
+  (LoRA + DPO, slow on MPS); DPO is far lighter than PPO-RLHF.
+- 🟡 **Autonomous cyber-defense RL (CAGE / CybORG)** — *added, gated*: an RL agent defends a
+  simulated network. On-domain (threat defense as sequential decision-making); CPU-trainable here.
 
 ## Sequence
 
@@ -38,9 +42,13 @@ one project shipped before the next is opened. Derived from
 | 8 | **Structured-Data DL + Distributed** | added | **tabular transformer** vs XGBoost, **time-series transformer**, PyTorch DDP→FSDP | fresh datasets |
 | 9 | **P7 — Overhead CV detection** | core | YOLO/R-CNN, SAHI tiling, mAP, distributed training | — |
 | 10 | **Streaming / real-time inference** | added | Spark Structured Streaming / Kafka real-time scoring | P1 extension |
+| 11 | **DPO / RLHF — align the P6 model** | added (RL) | preference tuning (DPO), reward-model concepts, extends LoRA | P6 model + P3 corpus |
+| 12 | **Autonomous cyber-defense RL (CAGE/CybORG)** | added (RL) | deep RL (PPO/DQN), sequential decision-making, gym env, reward design | on-domain (network defense) |
 
 *Order is a default, not a contract — clusters can be resequenced. The ATT&CK corpus (P3) feeds
-P4, Graph ML, and P6; the deep-learning items (8, 9) are the finale.*
+P4, Graph ML, and P6; the deep-learning items (8, 9) are the finale; the RL items (11, 12) are
+gated additions — build after the core plan ships. Both are buildable on this machine (CAGE on CPU,
+DPO on MPS); neither needs a GPU box (unlike distributed training / QLoRA).*
 
 ## Skill coverage — what each competency maps to
 
@@ -63,9 +71,11 @@ P4, Graph ML, and P6; the deep-learning items (8, 9) are the finale.*
 | CV (detection/segmentation/change) | P7 + CV track |
 | Streaming / real-time ML | Streaming ext. |
 | CI/CD for ML | CI/CD fold-in |
+| Reinforcement learning (DPO/RLHF, deep RL) | DPO project + CAGE project |
 
 ## The one rule (from the roadmap)
 
-**Ship before adding.** This plan is now deliberately *closed*. The binding constraint is no longer
-coverage — it's finishing. Resist new tools/projects until these exist. A finished project beats a
-longer plan. Backlog for anything new: name-drop only (recommenders, bandits, ONNX/Triton, K8s).
+**Ship before adding.** The plan was reopened once, deliberately, to add two RL projects (11, 12) —
+now re-closed. The binding constraint is no longer coverage — it's finishing. RL items are **gated**:
+build them only after the core plan ships. A finished project beats a longer plan. Backlog for
+anything further: name-drop only (recommenders, contextual bandits, ONNX/Triton, K8s).
