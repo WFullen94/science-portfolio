@@ -20,7 +20,9 @@ one project shipped before the next is opened. Derived from
 - ⏸️ **P5 — Uncertainty (Bayesian + conformal)** — deferred by request; circle back later.
 - ✅ **Causal inference** — MFA→compromise: naive estimate flips sign under confounding; recovered
   the true ATE (regression/IPW/AIPW/DoWhy) + refutations + T-learner CATE. *Shipped.*
-- 🚧 **P6 — LoRA fine-tuning** — *next*, then **Structured-Data DL**.
+- ✅ **P6 — LoRA fine-tuning** — CTI→ATT&CK technique classification; linear-probe 60% vs LoRA 92%
+  accuracy training 1.1% of params (DistilBERT + PEFT), MLflow-tracked. *Shipped.*
+- 🚧 **Structured-Data DL** — *next*: tabular + time-series transformers, distributed (DDP→FSDP).
 
 ## Sequence
 

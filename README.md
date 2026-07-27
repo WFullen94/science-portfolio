@@ -4,6 +4,7 @@
 [![P3 RAG CI](https://github.com/WFullen94/science-portfolio/actions/workflows/p3-ci.yml/badge.svg)](https://github.com/WFullen94/science-portfolio/actions/workflows/p3-ci.yml)
 [![Graph ML CI](https://github.com/WFullen94/science-portfolio/actions/workflows/graphml-ci.yml/badge.svg)](https://github.com/WFullen94/science-portfolio/actions/workflows/graphml-ci.yml)
 [![Causal CI](https://github.com/WFullen94/science-portfolio/actions/workflows/causal-ci.yml/badge.svg)](https://github.com/WFullen94/science-portfolio/actions/workflows/causal-ci.yml)
+[![LoRA CI](https://github.com/WFullen94/science-portfolio/actions/workflows/lora-ci.yml/badge.svg)](https://github.com/WFullen94/science-portfolio/actions/workflows/lora-ci.yml)
 
 Defensible, end-to-end artifacts built against the plan in
 [Applied Scientist Roadmap.md](Applied%20Scientist%20Roadmap.md).
@@ -21,7 +22,7 @@ defensive/analytic (intrusion *detection*, telemetry analysis, CTI document work
 | + | [Graph ML — link prediction on ATT&CK](project-graphml/) | ✅ complete | Trained a GraphSAGE GNN (PyTorch Geometric) on the ATT&CK knowledge graph to predict which techniques a threat group uses — ROC-AUC 0.908 on held-out edges with leakage-free splits and typed negative sampling |
 | + | [Causal inference — does MFA reduce compromise?](project-causal/) | ✅ complete | Estimated a treatment effect from confounded observational data where the naive estimate flips sign — recovered the true ATE four ways (regression/IPW/AIPW/DoWhy) with placebo + random-common-cause refutations, and a T-learner for heterogeneous effects |
 | 5 | Probabilistic / conformal uncertainty on detection | ⬜ planned | — |
-| 6 | LoRA/QLoRA fine-tune: CTI → ATT&CK (conditional) | ⬜ planned | — |
+| 6 | [LoRA fine-tune: CTI → ATT&CK](project-6-lora/) | ✅ complete | LoRA-fine-tuned an encoder to classify CTI procedure text into ATT&CK techniques — a controlled before/after (frozen linear probe 60% → LoRA 92% accuracy) training just 1.1% of parameters, tracked in MLflow |
 | 7 | Overhead object detection + distributed training | ⬜ planned | — |
 
 Build order follows the roadmap: **P1 → P3 → P4 → P5 → (P6) → P7**. Ship each before opening the next.
