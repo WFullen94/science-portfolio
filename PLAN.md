@@ -22,11 +22,43 @@ one project shipped before the next is opened. Derived from
   the true ATE (regression/IPW/AIPW/DoWhy) + refutations + T-learner CATE. *Shipped.*
 - ✅ **P6 — LoRA fine-tuning** — CTI→ATT&CK technique classification; linear-probe 60% vs LoRA 92%
   accuracy training 1.1% of params (DistilBERT + PEFT), MLflow-tracked. *Shipped.*
-- 🚧 **Structured-Data DL** — *next*: tabular + time-series transformers, distributed (DDP→FSDP).
+- ✅ **Structured-Data DL (stage 1)** — FT-Transformer vs XGBoost head-to-head on UNSW-NB15
+  (categorical NIDS data, chosen so per-feature attention has something to do). Identical split,
+  leakage-free encoders, comparable tuning. Honest result: XGBoost 0.990 ROC-AUC edges the
+  hand-rolled FT-Transformer's 0.986 — trees still win on tabular, per the literature. *Shipped.*
+  Stages 2–3 (time-series transformer, DDP→FSDP) remain.
 - 🟡 **DPO / RLHF (extends P6)** — *added, gated*: preference-tune the P6 model. Feasible here
   (LoRA + DPO, slow on MPS); DPO is far lighter than PPO-RLHF.
 - 🟡 **Autonomous cyber-defense RL (CAGE / CybORG)** — *added, gated*: an RL agent defends a
   simulated network. On-domain (threat defense as sequential decision-making); CPU-trainable here.
+
+### Added candidates (gated — from the Aug-2026 workspace survey)
+
+A sweep of the wider `~` workspace found deep *notebook* coverage of CV, multimodal, serving, and
+forecasting but **no end-to-end systems** for them (only `science-portfolio` + `llm-reliability` +
+`agent-eval` are real systems). These promote that knowledge into shippable services. All **gated**:
+build after P8 stages 2–3 and the standing core. New *system archetypes* the portfolio lacks are
+called out — breadth here is about engineering shape, not just another model.
+
+- 🔵 **Forecasting system** — dedicated time-series forecasting: classical (ARIMA/ETS/Prophet) vs
+  deep (PatchTST / N-BEATS / TFT), **rolling-origin backtesting**, probabilistic/quantile output,
+  MLflow + serving. On-domain option: forecast network-traffic / attack volume. *(Deeper than P8's
+  single time-series-transformer stage; `time-series-forecasting` is the deepest notebook set.)*
+- 🔵 **Serving / deployment flagship** — one model served **three ways** (FastAPI vs vLLM/Triton vs
+  ONNX/TensorRT) with a shared load-test harness and a p50/p95 latency-throughput-cost report. Fills
+  the entirely-absent GPU/optimized-serving category; reuses the P1 model. *New archetype.*
+- 🔵 **Multimodal CLIP image-search service** — promote `representation-learning/15_cross_modal_
+  retrieval` into a real service: `open_clip` encoder + persistent FAISS/qdrant index + FastAPI
+  `/search` + build-index CLI + recall@k test + Dockerfile. Lowest-lift multimodal system.
+- 🔵 **Recommender (two-tower retrieval + ranking)** — *new archetype*: candidate generation +
+  reranking, offline↔online parity. Most industry-ubiquitous shape the portfolio lacks. On-domain:
+  "techniques/threats similar to this one."
+- 🔵 **Active-learning loop** — *new archetype*: uncertainty sampling → label → retrain feedback
+  cycle (human-in-the-loop). Sits on the deep `data-centric-ai` notebooks; pairs with P5 uncertainty.
+  On-domain: prioritize which alerts an analyst labels next.
+- ⚪ **Opportunistic / on-domain extensions** (lighter): standalone model-monitoring service,
+  streaming anomaly detection, contextual bandits (adaptive triage), CTI→knowledge-graph construction
+  from raw reports, feature store + train/serve parity.
 
 ## Sequence
 
@@ -44,11 +76,18 @@ one project shipped before the next is opened. Derived from
 | 10 | **Streaming / real-time inference** | added | Spark Structured Streaming / Kafka real-time scoring | P1 extension |
 | 11 | **DPO / RLHF — align the P6 model** | added (RL) | preference tuning (DPO), reward-model concepts, extends LoRA | P6 model + P3 corpus |
 | 12 | **Autonomous cyber-defense RL (CAGE/CybORG)** | added (RL) | deep RL (PPO/DQN), sequential decision-making, gym env, reward design | on-domain (network defense) |
+| 13 | **Forecasting system** | gated | classical vs deep (PatchTST/N-BEATS/TFT), backtesting, probabilistic | fresh / P1 traffic |
+| 14 | **Serving / deployment flagship** | gated | vLLM/Triton/ONNX/TensorRT, load testing, latency-throughput report | P1 model |
+| 15 | **Multimodal CLIP image-search service** | gated | open_clip, FAISS/qdrant, FastAPI, recall@k | promotes RL notebook |
+| 16 | **Recommender (two-tower)** | gated | retrieval + ranking, offline↔online parity | — |
+| 17 | **Active-learning loop** | gated | uncertainty sampling, human-in-the-loop retrain cycle | P1 data + P5 |
 
 *Order is a default, not a contract — clusters can be resequenced. The ATT&CK corpus (P3) feeds
 P4, Graph ML, and P6; the deep-learning items (8, 9) are the finale; the RL items (11, 12) are
-gated additions — build after the core plan ships. Both are buildable on this machine (CAGE on CPU,
-DPO on MPS); neither needs a GPU box (unlike distributed training / QLoRA).*
+gated additions — build after the core plan ships. Items 13–17 are gated candidates from the
+Aug-2026 workspace survey (notebooks → systems); several are new archetypes the portfolio lacks
+(serving, recsys, active-learning loop). Most run on this machine; the serving flagship's vLLM/Triton
+and P8/P7 distributed training want a GPU box.*
 
 ## Skill coverage — what each competency maps to
 
@@ -72,10 +111,16 @@ DPO on MPS); neither needs a GPU box (unlike distributed training / QLoRA).*
 | Streaming / real-time ML | Streaming ext. |
 | CI/CD for ML | CI/CD fold-in |
 | Reinforcement learning (DPO/RLHF, deep RL) | DPO project + CAGE project |
+| Forecasting (classical + deep, backtesting) | Forecasting system (13) |
+| Optimized/GPU serving (vLLM/Triton/ONNX/TensorRT) | Serving flagship (14) |
+| Multimodal / cross-modal retrieval (CLIP) | CLIP image-search (15) |
+| Recommenders (two-tower retrieval + ranking) | Recommender (16) |
+| Active learning / human-in-the-loop | Active-learning loop (17) |
 
 ## The one rule (from the roadmap)
 
-**Ship before adding.** The plan was reopened once, deliberately, to add two RL projects (11, 12) —
-now re-closed. The binding constraint is no longer coverage — it's finishing. RL items are **gated**:
-build them only after the core plan ships. A finished project beats a longer plan. Backlog for
-anything further: name-drop only (recommenders, contextual bandits, ONNX/Triton, K8s).
+**Ship before adding.** The plan was reopened to add the RL projects (11, 12) and again to log the
+Aug-2026 survey candidates (13–17). The binding constraint is not coverage — it's finishing. Items
+11–17 are all **gated**: build only after the core plan and P8 stages ship, one at a time. A finished
+project beats a longer plan. Backlog beyond this: name-drop only (K8s/KServe, feature stores,
+contextual bandits, CTI knowledge-graph construction, model-monitoring service).
