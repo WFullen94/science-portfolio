@@ -1,0 +1,80 @@
+# Project 8 — Structured-Data DL: single source of truth.
+# One data pipeline feeds two models on an IDENTICAL split so the head-to-head
+# (FT-Transformer vs XGBoost) is apples-to-apples. Everything downstream reads here.
+
+project_name: structdl-unsw
+
+# --- Dataset: UNSW-NB15 (original 45-col academic partition) ------------------
+# Chosen deliberately over the NetFlow-v2 schema P1 used: this version keeps real
+# CATEGORICAL features (proto/service/state), which is where a tabular transformer's
+# per-feature attention has something to work with. Pure-numeric NetFlow is XGBoost's
+# home turf. Binary target `label` (0 benign / 1 attack); `attack_cat` kept for later.
+dataset:
+  name: UNSW-NB15
+  # Ordered sources tried in turn (first hit wins). Public HuggingFace mirrors of the
+  # official UNSW-NB15 training/testing partition (45-col schema). If all fail
+  # (offline / CI), we fall back to a schema-accurate synthetic sample so the
+  # pipeline is ALWAYS runnable. `test_url` is optional — a single-file source is
+  # merged then re-split like everything else.
+  sources:
+    - kind: url_csv
+      train_url: https://huggingface.co/datasets/Mireu-Lab/UNSW-NB15/resolve/main/train.csv
+      test_url: https://huggingface.co/datasets/Mireu-Lab/UNSW-NB15/resolve/main/test.csv
+    - kind: url_csv
+      train_url: https://huggingface.co/datasets/Mouwiya/UNSW-NB15/resolve/main/UNSW_NB15_training-set.csv
+  # Columns.
+  target: label                 # 0 = benign, 1 = attack (binary head)
+  multiclass: attack_cat        # attack family — reserved for a later stage
+  categorical_columns: [proto, service, state]
+  drop_columns: [id]            # row identifier — pure leakage, drop before modeling
+  # Dev cap: keep only the first N rows after shuffling (fast local runs). null = all.
+  max_rows: 60000
+  # Offline fallback size when no source is reachable.
+  synthetic_fallback_rows: 20000
+
+# --- Split (shared by BOTH models — this is what makes it a fair fight) -------
+split:
+  test_size: 0.2
+  val_size: 0.2            # carved from the train remainder; used for FT early-stopping
+  random_state: 42
+
+paths:
+  data_root: data
+  cache: data/unsw_nb15.parquet     # merged + capped dataset, cached after first build
+  reports: data/reports             # head-to-head table + per-model metrics
+
+# --- MLflow ------------------------------------------------------------------
+mlflow:
+  tracking_uri: sqlite:///mlflow.db
+  artifact_location: mlartifacts
+  experiment: structdl-unsw-headtohead
+  registered_model: structdl-unsw-detector
+
+# --- XGBoost baseline --------------------------------------------------------
+# Strong classical baseline. Native categorical support (enable_categorical), so
+# proto/service/state go in as pandas `category` dtype — no one-hot blowup.
+xgb:
+  optuna_trials: 25
+  cv_folds: 3
+  optuna_sample_rows: 30000   # subsample for the CV search; final fit uses full train
+  random_state: 42
+
+# --- FT-Transformer (hand-rolled) --------------------------------------------
+# Feature tokenizer (one token per feature: linear for numerics, embedding for
+# categoricals) + [CLS] token + Transformer encoder + classification head.
+# Defaults follow Gorishniy et al. 2021 (rtdl) at a laptop-friendly scale.
+ft_transformer:
+  d_token: 64          # per-feature embedding width
+  n_blocks: 3          # transformer encoder layers
+  n_heads: 8           # attention heads (d_token must be divisible by this)
+  ffn_factor: 2.0      # FFN hidden = d_token * ffn_factor
+  attention_dropout: 0.2
+  ffn_dropout: 0.1
+  residual_dropout: 0.0
+  lr: 1.0e-4
+  weight_decay: 1.0e-5
+  batch_size: 256
+  max_epochs: 40
+  patience: 8          # early-stop on val ROC-AUC
+  device: null         # null -> auto (mps/cuda if available, else cpu)
+  random_state: 42

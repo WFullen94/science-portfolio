@@ -5,6 +5,7 @@
 [![Graph ML CI](https://github.com/WFullen94/science-portfolio/actions/workflows/graphml-ci.yml/badge.svg)](https://github.com/WFullen94/science-portfolio/actions/workflows/graphml-ci.yml)
 [![Causal CI](https://github.com/WFullen94/science-portfolio/actions/workflows/causal-ci.yml/badge.svg)](https://github.com/WFullen94/science-portfolio/actions/workflows/causal-ci.yml)
 [![LoRA CI](https://github.com/WFullen94/science-portfolio/actions/workflows/lora-ci.yml/badge.svg)](https://github.com/WFullen94/science-portfolio/actions/workflows/lora-ci.yml)
+[![Structured-DL CI](https://github.com/WFullen94/science-portfolio/actions/workflows/structdl-ci.yml/badge.svg)](https://github.com/WFullen94/science-portfolio/actions/workflows/structdl-ci.yml)
 
 Defensible, end-to-end artifacts built against the plan in
 [Applied Scientist Roadmap.md](Applied%20Scientist%20Roadmap.md).
@@ -24,8 +25,9 @@ defensive/analytic (intrusion *detection*, telemetry analysis, CTI document work
 | 5 | Probabilistic / conformal uncertainty on detection | ⬜ planned | — |
 | 6 | [LoRA fine-tune: CTI → ATT&CK](project-6-lora/) | ✅ complete | LoRA-fine-tuned an encoder to classify CTI procedure text into ATT&CK techniques — a controlled before/after (frozen linear probe 60% → LoRA 92% accuracy) training just 1.1% of parameters, tracked in MLflow |
 | 7 | Overhead object detection + distributed training | ⬜ planned | — |
+| 8 | [Structured-Data DL — FT-Transformer vs XGBoost](project-8-structured-dl/) | ✅ stage 1 | Ran a *controlled* tabular-transformer vs XGBoost head-to-head on categorical NIDS data (UNSW-NB15) — identical split, leakage-free encoders fit on train only, comparable tuning — and reported the *honest* result: a hand-rolled FT-Transformer reaches 0.986 ROC-AUC but a tuned XGBoost still edges it at 0.990, matching the tabular-DL literature. Isolated a dual-OpenMP segfault via per-model subprocesses |
 
-Build order follows the roadmap: **P1 → P3 → P4 → P5 → (P6) → P7**. Ship each before opening the next.
+Build order follows the roadmap: **P1 → P3 → P4 → P5 → (P6) → P7 → P8**. Ship each before opening the next.
 
 ## Continuous integration
 

@@ -1,0 +1,11 @@
+# Structured-Data DL: FT-Transformer vs XGBoost on tabular NIDS data (UNSW-NB15).
+torch>=2.2            # FT-Transformer (hand-rolled feature tokenizer + encoder)
+xgboost>=2.0          # gradient-boosted baseline (native categorical support)
+optuna>=3.6           # hyperparameter search for the XGBoost baseline
+scikit-learn>=1.4     # splits, preprocessing, metrics
+mlflow>=2.17,<3       # experiment tracking (the head-to-head)
+numpy>=1.26
+pandas>=2.1
+requests>=2.31        # dataset download
+pyyaml>=6.0
+pytest>=8.0
