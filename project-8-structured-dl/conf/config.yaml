@@ -99,6 +99,24 @@ sequence:
   sweep_seq_lens: [32, 64, 128, 256]
   sweep_max_epochs: 25   # cap per-model training in the sweep for tractability
 
+# ============================================================================
+# STAGE 3 — Distributed training (DDP -> FSDP) of the time-series Transformer
+# ============================================================================
+# No CUDA here, so we run the real multi-process mechanics on CPU via the `gloo`
+# backend (self-launched with mp.spawn). Same code scales to multi-GPU with
+# `torchrun --nproc_per_node=N` on a CUDA box — see the README.
+distributed:
+  nproc: 2             # worker processes (ranks) to spawn on this one node
+  backend: gloo        # CPU collective backend (nccl on a real GPU cluster)
+  strategy: ddp        # ddp | fsdp (CLI --strategy overrides)
+  epochs: 8
+  batch_size: 128      # per-rank local batch (global = batch_size * nproc)
+  lr: 3.0e-4
+  weight_decay: 1.0e-5
+  master_addr: "127.0.0.1"
+  master_port: "29501"
+  random_state: 42
+
 # --- Time-series Transformer (encoder over the sequence, [CLS] read-off) ------
 ts_transformer:
   d_model: 64          # per-step embedding width (input features projected up)

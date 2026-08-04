@@ -22,11 +22,13 @@ one project shipped before the next is opened. Derived from
   the true ATE (regression/IPW/AIPW/DoWhy) + refutations + T-learner CATE. *Shipped.*
 - ✅ **P6 — LoRA fine-tuning** — CTI→ATT&CK technique classification; linear-probe 60% vs LoRA 92%
   accuracy training 1.1% of params (DistilBERT + PEFT), MLflow-tracked. *Shipped.*
-- ✅ **Structured-Data DL (stage 1)** — FT-Transformer vs XGBoost head-to-head on UNSW-NB15
-  (categorical NIDS data, chosen so per-feature attention has something to do). Identical split,
-  leakage-free encoders, comparable tuning. Honest result: XGBoost 0.990 ROC-AUC edges the
-  hand-rolled FT-Transformer's 0.986 — trees still win on tabular, per the literature. *Shipped.*
-  Stages 2–3 (time-series transformer, DDP→FSDP) remain.
+- ✅ **P8 — Structured-Data DL (complete)** — two controlled transformer-vs-baseline head-to-heads
+  plus distributed training. *Stage 1 (tabular):* XGBoost 0.990 edges the FT-Transformer's 0.986 —
+  trees still win on tabular. *Stage 2 (sequence):* a time-series Transformer holds ~1.0 ROC-AUC
+  while a GRU collapses to 0.607 (near-random) at window length 256 — attention beats recurrence on
+  long sequences. *Stage 3 (distributed):* DDP verified end-to-end on CPU/gloo (2 ranks, 0.9985);
+  FSDP wired (shard + FULL_STATE_DICT) and CUDA-gated. Same lesson throughout: match the inductive
+  bias, prove it. *Shipped.*
 - 🟡 **DPO / RLHF (extends P6)** — *added, gated*: preference-tune the P6 model. Feasible here
   (LoRA + DPO, slow on MPS); DPO is far lighter than PPO-RLHF.
 - 🟡 **Autonomous cyber-defense RL (CAGE / CybORG)** — *added, gated*: an RL agent defends a

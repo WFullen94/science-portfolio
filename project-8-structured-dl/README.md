@@ -112,7 +112,9 @@ src/structdl/
   ts_transformer.py         time-series Transformer (proj + pos-enc + CLS)                 [stage 2b]
   ts_compare.py             single-length GRU vs TS-Transformer head-to-head               [stage 2c]
   ts_sweep.py               length sweep — attention vs recurrence (headline)              [stage 2d]
-tests/                      data integrity (leakage, shapes) + model shapes, both stages
+  # stage 3 — distributed
+  train_distributed.py      DDP (CPU/gloo, runs here) + FSDP (shard + FULL_STATE_DICT)      [stage 3]
+tests/                      data integrity (leakage, shapes) + model/import smoke, all stages
 ```
 
 ## The interview framing
@@ -178,9 +180,51 @@ make ts-compare   # single-length GRU vs TS-Transformer head-to-head
 
 ---
 
+---
+
+# Stage 3 — Distributed training (DDP → FSDP)
+
+Data-parallel training is a multi-*process* pattern, not a multi-GPU-only one: each rank owns a
+replica (DDP) or a *shard* (FSDP) of the model, trains on its slice of the data via a
+`DistributedSampler`, and the collective all-reduces gradients to keep ranks in sync. That machinery
+runs on CPU through the `gloo` backend, so the mechanics are demonstrated **for real** on this
+GPU-less machine — the identical code scales to multi-GPU with `torchrun --nproc_per_node=N` and
+`nccl` on CUDA ([train_distributed.py](src/structdl/train_distributed.py)).
+
+```bash
+make ddp     # 2 ranks, gloo/CPU — runs here, end to end
+make fsdp    # same code path; guarded to CUDA (see below)
+```
+
+**DDP — verified on this machine (2 ranks, gloo/CPU):**
+
+```
+[dist] strategy=ddp world_size=2 backend=gloo | 5120 train windows → 2560/rank
+[dist] DONE (ddp, 2 ranks) — test ROC-AUC=0.9985 F1=0.9745
+```
+
+`DistributedSampler` partitions 5120 windows into 2560/rank; gradients all-reduce each step; rank 0
+evaluates its (complete) replica. Real distributed training, just scaled down to CPU.
+
+**DDP vs FSDP — and why FSDP is CUDA-gated here:**
+
+| | DDP | FSDP |
+|---|---|---|
+| Each rank holds | a **full replica** | a **shard** of params/grads/optimizer state |
+| Communication | all-reduce grads / step | all-gather params just-in-time per layer |
+| Memory | scales with model size per GPU | fits models too big for one GPU |
+| Checkpoint | any rank has full weights | gather `FULL_STATE_DICT` to rank 0 |
+
+The FSDP path (shard wrap + `FULL_STATE_DICT` rank-0 checkpoint) is wired in `_wrap`/`_evaluate`, but
+**torch's FSDP will not initialize on a CPU/MPS-only host** — it probes MPS for a device API it
+lacks, and the CPU flat-param path segfaults. So `make fsdp` here prints an honest guard and points
+you to run it on a CUDA box (`backend=nccl`, one rank per GPU), where the same code runs. DDP is the
+runnable proof of the distributed mechanics on this hardware; FSDP is the same pattern, cluster-bound.
+
+---
+
 ## Roadmap (this project)
 
 - ✅ **Stage 1** — tabular: FT-Transformer vs XGBoost.
 - ✅ **Stage 2** — sequence: time-series Transformer vs GRU (length sweep).
-- **Stage 3 — distributed training**: take a training loop from single-device to **DDP → FSDP**,
-  documenting the sharding story.
+- ✅ **Stage 3** — distributed: DDP verified on CPU/gloo; FSDP wired + CUDA-gated. **Project complete.**

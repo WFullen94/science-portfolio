@@ -19,6 +19,10 @@ ts:        ; . .venv/bin/activate && python -m structdl.ts_transformer
 ts-compare:; . .venv/bin/activate && python -m structdl.ts_compare    # sequence head-to-head
 ts-sweep:  ; . .venv/bin/activate && python -m structdl.ts_sweep      # length sweep (headline)
 
+# --- Stage 3: distributed training (DDP runs here on CPU/gloo; FSDP -> CUDA) --
+ddp:       ; . .venv/bin/activate && python -m structdl.train_distributed --strategy ddp
+fsdp:      ; . .venv/bin/activate && python -m structdl.train_distributed --strategy fsdp
+
 test:      ; . .venv/bin/activate && pytest -q
 
 clean:

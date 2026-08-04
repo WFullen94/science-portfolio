@@ -25,7 +25,7 @@ defensive/analytic (intrusion *detection*, telemetry analysis, CTI document work
 | 5 | Probabilistic / conformal uncertainty on detection | ⬜ planned | — |
 | 6 | [LoRA fine-tune: CTI → ATT&CK](project-6-lora/) | ✅ complete | LoRA-fine-tuned an encoder to classify CTI procedure text into ATT&CK techniques — a controlled before/after (frozen linear probe 60% → LoRA 92% accuracy) training just 1.1% of parameters, tracked in MLflow |
 | 7 | Overhead object detection + distributed training | ⬜ planned | — |
-| 8 | [Structured-Data DL — FT-Transformer vs XGBoost](project-8-structured-dl/) | ✅ stage 1 | Ran a *controlled* tabular-transformer vs XGBoost head-to-head on categorical NIDS data (UNSW-NB15) — identical split, leakage-free encoders fit on train only, comparable tuning — and reported the *honest* result: a hand-rolled FT-Transformer reaches 0.986 ROC-AUC but a tuned XGBoost still edges it at 0.990, matching the tabular-DL literature. Isolated a dual-OpenMP segfault via per-model subprocesses |
+| 8 | [Structured-Data DL — transformers vs the right baseline](project-8-structured-dl/) | ✅ complete | Two *controlled* transformer-vs-baseline head-to-heads on NIDS data + distributed training. Tabular: a hand-rolled FT-Transformer (0.986) loses narrowly to tuned XGBoost (0.990) — trees still win on tables. Sequence: a time-series Transformer holds ~1.0 ROC-AUC while a GRU collapses to 0.61 at window length 256 — attention beats recurrence on long sequences. Distributed: DDP verified on CPU/gloo (2 ranks), FSDP wired + CUDA-gated. Lesson: match the inductive bias and *prove* it |
 
 Build order follows the roadmap: **P1 → P3 → P4 → P5 → (P6) → P7 → P8**. Ship each before opening the next.
 

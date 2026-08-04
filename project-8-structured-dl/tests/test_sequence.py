@@ -59,3 +59,10 @@ def test_gru_forward_shape(cfg):
     model = GRUClassifier(len(b.features), cfg["gru"])
     x = torch.from_numpy(b.Xtrain[:8]).float()
     assert model(x).shape == (8,)
+
+
+def test_distributed_module_imports():
+    # Real multi-process DDP is too heavy for CI; just guard against import/API
+    # breakage. The DDP path is verified manually via `make ddp` (CPU/gloo).
+    import structdl.train_distributed as td
+    assert hasattr(td, "_worker") and hasattr(td, "_wrap") and hasattr(td, "_evaluate")
