@@ -1,0 +1,60 @@
+# P7 — Overhead object detection (VisDrone) + SAHI tiling. Single source of truth.
+
+project_name: overwatch-visdrone
+
+# --- Dataset: VisDrone-DET (aerial/drone imagery, tiny objects) ---------------
+# The materialized YOLO-format dataset already lives in the computer-vision repo
+# (images are symlinks into the 1.6GB raw VisDrone tree). We reference it rather
+# than copy it. `prepare` also carves a tiny bundled sample for CI / smoke tests.
+dataset:
+  name: VisDrone-DET
+  # Full dataset.yaml (external — 6,471 train / 548 val images, 10 classes).
+  yaml: /Users/waynefullen/computer-vision-notebooks/data/VisDrone_YOLO/dataset.yaml
+  # Public source, for reproduction on another machine (see data.py --download).
+  download_urls:
+    train: https://github.com/ultralytics/assets/releases/download/v0.0.0/VisDrone2019-DET-train.zip
+    val: https://github.com/ultralytics/assets/releases/download/v0.0.0/VisDrone2019-DET-val.zip
+  names: [pedestrian, people, bicycle, car, van, truck, tricycle, awning-tricycle, bus, motor]
+  nc: 10
+  # Tiny bundled subset (built by `prepare`) — keeps CI/smoke self-contained.
+  sample_dir: data/sample
+  sample_images: 8
+
+# --- Model -------------------------------------------------------------------
+model:
+  weights: yolov8n.pt        # COCO-pretrained nano — fine-tuned on VisDrone
+  imgsz: 960                 # VisDrone objects are tiny; larger input helps recall
+  device: null               # null -> auto (mps > cuda > cpu)
+
+# --- Training (fine-tune) ----------------------------------------------------
+train:
+  epochs: 20
+  batch: 16
+  patience: 8
+  seed: 42
+  runs_dir: data/runs        # ultralytics run outputs (weights, curves)
+  experiment: overwatch-visdrone   # MLflow experiment
+
+# --- Evaluation: the head-to-head — untiled vs SAHI-tiled --------------------
+# VisDrone is dominated by small objects; slicing-aided inference (SAHI) runs the
+# detector on overlapping tiles and merges, trading latency for small-object recall.
+eval:
+  conf: 0.25
+  iou: 0.5                   # IoU threshold for mAP@50
+  max_images: 200            # cap eval images for a tractable local comparison
+  sahi:
+    slice_height: 512
+    slice_width: 512
+    overlap_ratio: 0.2       # tile overlap so objects on seams aren't lost
+
+# --- Serving -----------------------------------------------------------------
+serve:
+  weights: data/runs/finetune/weights/best.pt   # trained weights (falls back to model.weights)
+  onnx: data/overwatch.onnx
+  conf: 0.25
+  use_sahi: true             # tile at inference for small-object recall
+
+# --- MLflow ------------------------------------------------------------------
+mlflow:
+  tracking_uri: sqlite:///mlflow.db
+  experiment: overwatch-visdrone

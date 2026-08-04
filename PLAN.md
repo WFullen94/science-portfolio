@@ -29,6 +29,10 @@ one project shipped before the next is opened. Derived from
   long sequences. *Stage 3 (distributed):* DDP verified end-to-end on CPU/gloo (2 ranks, 0.9985);
   FSDP wired (shard + FULL_STATE_DICT) and CUDA-gated. Same lesson throughout: match the inductive
   bias, prove it. *Shipped.*
+- ✅ **P7 — Overwatch (overhead CV detection)** — fine-tuned YOLOv8n on VisDrone (aerial, tiny
+  objects), then a controlled untiled-vs-SAHI-tiled head-to-head scored by one mAP implementation:
+  SAHI lifts mAP@50 +0.022 and small-object recall +0.055 at 6.5× latency. ONNX export + FastAPI
+  `/predict` (tiles at inference) + Dockerfile + CI. *Shipped.*
 - 🟡 **DPO / RLHF (extends P6)** — *added, gated*: preference-tune the P6 model. Feasible here
   (LoRA + DPO, slow on MPS); DPO is far lighter than PPO-RLHF.
 - 🟡 **Autonomous cyber-defense RL (CAGE / CybORG)** — *added, gated*: an RL agent defends a

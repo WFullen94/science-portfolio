@@ -1,0 +1,13 @@
+# P7 — Overhead object detection (VisDrone) + small-object SAHI tiling, served.
+ultralytics>=8.2      # YOLOv8/v11 train + predict + ONNX export
+sahi>=0.11            # slicing-aided hyper inference (tiled small-object detection)
+onnx>=1.16            # ONNX export target
+onnxruntime>=1.18     # ONNX inference in the served model
+fastapi>=0.111        # /predict service
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9  # image upload in FastAPI
+mlflow>=2.17,<3       # experiment tracking (fine-tune runs, eval metrics)
+pillow>=10.0          # image IO
+numpy>=1.26
+pyyaml>=6.0
+pytest>=8.0

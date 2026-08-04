@@ -20,6 +20,8 @@ logs/
 mlruns/
 mlartifacts/
 mlflow.db
+# ultralytics run outputs + its MLflow autolog
+runs/
 **/serving/model/
 *.parquet
 *.csv
