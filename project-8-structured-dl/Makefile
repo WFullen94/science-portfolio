@@ -6,10 +6,19 @@ setup:
 	. .venv/bin/activate && python -m pip install --upgrade pip wheel && \
 		python -m pip install -r requirements.txt && python -m pip install -e .
 
+# --- Stage 1: tabular (FT-Transformer vs XGBoost) ----------------------------
 data:      ; . .venv/bin/activate && python -m structdl.data
 xgb:       ; . .venv/bin/activate && python -m structdl.xgb_baseline
 ft:        ; . .venv/bin/activate && python -m structdl.ft_transformer
-compare:   ; . .venv/bin/activate && python -m structdl.compare   # the head-to-head
+compare:   ; . .venv/bin/activate && python -m structdl.compare      # tabular head-to-head
+
+# --- Stage 2: sequence (time-series Transformer vs GRU) ----------------------
+seqdata:   ; . .venv/bin/activate && python -m structdl.sequence_data
+gru:       ; . .venv/bin/activate && python -m structdl.gru_baseline
+ts:        ; . .venv/bin/activate && python -m structdl.ts_transformer
+ts-compare:; . .venv/bin/activate && python -m structdl.ts_compare    # sequence head-to-head
+ts-sweep:  ; . .venv/bin/activate && python -m structdl.ts_sweep      # length sweep (headline)
+
 test:      ; . .venv/bin/activate && pytest -q
 
 clean:

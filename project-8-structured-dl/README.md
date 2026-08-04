@@ -1,4 +1,20 @@
-# Structured-Data DL — Tabular Transformer vs XGBoost on UNSW-NB15
+# Structured-Data DL — Transformers vs the right baseline
+
+Two **controlled head-to-heads** on structured NIDS data, each pitting a Transformer against the
+strong classical baseline for that data shape — and reporting the honest result:
+
+- **Stage 1 (tabular)** — hand-rolled **FT-Transformer** vs a tuned **XGBoost**. *The tree wins,
+  narrowly* (0.990 vs 0.986 ROC-AUC) — as the tabular literature predicts.
+- **Stage 2 (sequence)** — a **time-series Transformer** vs a **GRU**. *Attention wins decisively on
+  long windows* (0.996 vs 0.607 at length 256) — recurrence forgets, attention doesn't.
+
+The through-line isn't "deep learning wins" — it's **match the inductive bias to the data, and prove
+it with a fair comparison** (identical splits, leakage-free encoders, comparable tuning). Knowing
+*when a transformer is and isn't worth it* is the actual decision an applied scientist owns.
+
+---
+
+# Stage 1 — Tabular: FT-Transformer vs XGBoost on UNSW-NB15
 
 A **controlled head-to-head**: a hand-rolled **FT-Transformer** against a tuned **XGBoost**
 baseline, on the same intrusion-detection rows, same split, same metrics. The point isn't to
@@ -81,26 +97,90 @@ pipeline falls back to a **schema-accurate synthetic sample** so it always runs.
 ## Layout
 
 ```
-conf/config.yaml            single source of truth (dataset, shared split, both models, MLflow)
+conf/config.yaml            single source of truth (data, splits, all models, MLflow)
 src/structdl/
+  metrics.py                shared binary-classification metrics (both stages)
+  # stage 1 — tabular
   data.py                   UNSW-NB15 -> one shared leakage-free split, two model views   [stage 1]
-  metrics.py                shared binary-classification metrics
   xgb_baseline.py           XGBoost + Optuna CV search (the baseline)                      [stage 1a]
   ft_transformer.py         hand-rolled FT-Transformer (feature tokenizer + CLS)           [stage 1b]
-  compare.py                one split -> both models -> head-to-head + report              [stage 1c]
-tests/                      data integrity (leakage, shapes) + model shapes
+  compare.py                one split -> both models (subprocess-isolated) -> report       [stage 1c]
+  # stage 2 — sequence
+  sequence_data.py          windowed telemetry w/ temporal-burst signal, shared split      [stage 2]
+  seq_train.py              shared train/eval/MLflow loop for both sequence models
+  gru_baseline.py           recurrent GRU classifier (the baseline)                        [stage 2a]
+  ts_transformer.py         time-series Transformer (proj + pos-enc + CLS)                 [stage 2b]
+  ts_compare.py             single-length GRU vs TS-Transformer head-to-head               [stage 2c]
+  ts_sweep.py               length sweep — attention vs recurrence (headline)              [stage 2d]
+tests/                      data integrity (leakage, shapes) + model shapes, both stages
 ```
 
 ## The interview framing
 
-> "I ran a controlled FT-Transformer vs XGBoost head-to-head on categorical NIDS data — same split,
-> leakage-free encoders fit on train only, comparable tuning budgets. I picked the categorical
-> UNSW-NB15 partition on purpose, because a tabular transformer's per-feature attention has nothing
-> to do on the pure-numeric NetFlow schema. I report the honest gap rather than a rigged win —
-> which is the decision an applied scientist actually owns: *is a neural net worth it on this table?*"
+> "I ran two controlled head-to-heads on structured NIDS data, each transformer against the right
+> classical baseline. On tabular data a tuned XGBoost edged my FT-Transformer (0.990 vs 0.986) —
+> trees still win there. On sequential telemetry the story flipped: a time-series Transformer held
+> ~1.0 ROC-AUC while a GRU collapsed to near-random once windows got long enough that its last-hidden
+> read-out forgot the burst. Same split, leakage-free encoders, comparable tuning both times. The
+> point isn't that deep learning wins — it's matching the inductive bias to the data and *proving*
+> which model to ship, which is the decision an applied scientist actually owns."
 
-## Roadmap (this project, later stages)
+---
 
-- **Stage 2 — time-series transformer** on sequential telemetry (windowed flows).
-- **Stage 3 — distributed training**: take this FT-Transformer training loop from single-device to
-  **DDP → FSDP**, documenting the sharding story.
+# Stage 2 — Sequence detection: time-series Transformer vs GRU
+
+Stage 1 asked *"transformer or tree on a table?"* Stage 2 asks a different question on
+**sequential** data: *"attention or recurrence on a window of telemetry?"* — and the answer
+flips, which is the point of running both.
+
+## The task (designed so order matters)
+
+Windows of per-step telemetry where an attack is a **short, absolutely-sized burst** (a 2–4 step
+spike) placed anywhere in the window; benign windows are smooth, sometimes with broad *evenly-spread*
+elevation (so a mean-pooling model can't cheat on totals). Detecting it requires reading the
+temporal *shape*, not the average. Synthetic + deterministic so it always runs
+([sequence_data.py](src/structdl/sequence_data.py)); leakage-free standardization fit on train only.
+
+## The headline — where attention beats recurrence (length sweep)
+
+Because the burst is a *fixed-size* event, a longer window makes it a sparser needle sitting further
+from the sequence end. A GRU classifies from its **last hidden state**, so an early burst in a long
+window gets forgotten; the Transformer **attends** to every step, so position is irrelevant. Run the
+head-to-head across window lengths ([ts_sweep.py](src/structdl/ts_sweep.py)):
+
+| seq_len | GRU ROC-AUC | TS-Transformer ROC-AUC | Δ (TS − GRU) |
+|---|---|---|---|
+| 32 | 1.0000 | 1.0000 | −0.0000 |
+| 64 | 1.0000 | 1.0000 | −0.0000 |
+| 128 | 1.0000 | 0.9999 | −0.0001 |
+| **256** | **0.6071** | **0.9964** | **+0.3892** |
+
+**The GRU ties the Transformer up to length 128, then collapses to near-random at 256** while the
+Transformer holds. That's the vanishing-memory failure of a recurrent read-out made visible — and
+the mirror image of stage 1: *the tree beat the transformer on a table; attention crushes recurrence
+on long sequences.* Same lesson both times — **match the inductive bias to the data**, and prove it
+rather than assume it.
+
+## Architecture
+
+Both are pure-torch binary sequence classifiers sharing one training loop
+([seq_train.py](src/structdl/seq_train.py)) so the comparison differs only in the model:
+
+- **TS-Transformer** ([ts_transformer.py](src/structdl/ts_transformer.py)) — per-step linear
+  projection → sinusoidal positional encoding → learned `[CLS]` → Transformer encoder → read off `[CLS]`.
+- **GRU** ([gru_baseline.py](src/structdl/gru_baseline.py)) — multi-layer GRU, classify from the
+  last-step hidden state (the standard, and the thing that fails at length).
+
+```bash
+make ts-sweep     # the length sweep (headline) -> data/reports/ts_sweep.json
+make ts-compare   # single-length GRU vs TS-Transformer head-to-head
+```
+
+---
+
+## Roadmap (this project)
+
+- ✅ **Stage 1** — tabular: FT-Transformer vs XGBoost.
+- ✅ **Stage 2** — sequence: time-series Transformer vs GRU (length sweep).
+- **Stage 3 — distributed training**: take a training loop from single-device to **DDP → FSDP**,
+  documenting the sharding story.

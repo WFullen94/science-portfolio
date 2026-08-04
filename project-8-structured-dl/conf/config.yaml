@@ -78,3 +78,52 @@ ft_transformer:
   patience: 8          # early-stop on val ROC-AUC
   device: null         # null -> auto (mps/cuda if available, else cpu)
   random_state: 42
+
+# ============================================================================
+# STAGE 2 — Sequence detection: time-series Transformer vs GRU
+# ============================================================================
+
+# --- Sequence data (windowed telemetry with a temporal-burst attack signal) --
+sequence:
+  n_windows: 8000      # synthetic windows generated (always-runnable, no download)
+  seq_len: 128         # timesteps per window (long enough to stress GRU memory)
+  attack_rate: 0.4     # fraction of windows containing a burst
+  burst_amp_low: 2.0   # burst amplitude range (short 2-4 step spike, absolute size)
+  burst_amp_high: 3.0
+  noise: 0.3           # per-step observation noise
+  test_size: 0.2
+  val_size: 0.2        # carved from train remainder; used for early-stopping
+  random_state: 42
+  # Length sweep (ts_sweep.py): the Transformer's edge over the GRU should widen as
+  # the window grows and the burst sits further from the GRU's last-step read-out.
+  sweep_seq_lens: [32, 64, 128, 256]
+  sweep_max_epochs: 25   # cap per-model training in the sweep for tractability
+
+# --- Time-series Transformer (encoder over the sequence, [CLS] read-off) ------
+ts_transformer:
+  d_model: 64          # per-step embedding width (input features projected up)
+  n_blocks: 3
+  n_heads: 8
+  ffn_factor: 2.0
+  dropout: 0.1
+  lr: 3.0e-4
+  weight_decay: 1.0e-5
+  batch_size: 128
+  max_epochs: 40
+  patience: 8
+  device: null
+  random_state: 42
+
+# --- GRU baseline (recurrent; the challenger to beat / lose to) ---------------
+gru:
+  hidden_size: 64
+  n_layers: 2
+  dropout: 0.1
+  bidirectional: false
+  lr: 3.0e-4
+  weight_decay: 1.0e-5
+  batch_size: 128
+  max_epochs: 40
+  patience: 8
+  device: null
+  random_state: 42
