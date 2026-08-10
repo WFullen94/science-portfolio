@@ -1,0 +1,33 @@
+name: detsynth CI
+
+on:
+  push:
+    paths: ['project-detection-synth/**', '.github/workflows/detsynth-ci.yml']
+  pull_request:
+    paths: ['project-detection-synth/**', '.github/workflows/detsynth-ci.yml']
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: project-detection-synth
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Grounding + formatting tests are pure — no torch/transformers or STIX download
+      # needed. Install a minimal set so CI is fast; model/generation verified locally.
+      - name: Install (minimal)
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml pytest
+          pip install -e . --no-deps
+
+      - name: Run tests
+        run: pytest -q

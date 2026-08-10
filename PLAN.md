@@ -33,8 +33,11 @@ one project shipped before the next is opened. Derived from
   objects), then a controlled untiled-vs-SAHI-tiled head-to-head scored by one mAP implementation:
   SAHI lifts mAP@50 +0.022 and small-object recall +0.055 at 6.5× latency. ONNX export + FastAPI
   `/predict` (tiles at inference) + Dockerfile + CI. *Shipped.*
-- 🟡 **DPO / RLHF (extends P6)** — *added, gated*: preference-tune the P6 model. Feasible here
-  (LoRA + DPO, slow on MPS); DPO is far lighter than PPO-RLHF.
+- 🟣 **detsynth — grounded ATT&CK detection-content generator** (item 11, pivoted from "DPO on P6").
+  Turns a technique into a *detection pack* (procedures, telemetry, Sigma starter, test fixtures)
+  grounded in ATT&CK v17's real detection analytics. *Phase 1 shipped* (STIX grounding + generator;
+  7B fixes the hallucinations a 1.5B makes). *Phase 2 (DPO faithfulness alignment)* is written but
+  blocked by a TRL 0.29 + transformers 5.x hang on MPS — needs a pinned stack + re-run.
 - 🟡 **Autonomous cyber-defense RL (CAGE / CybORG)** — *added, gated*: an RL agent defends a
   simulated network. On-domain (threat defense as sequential decision-making); CPU-trainable here.
 

@@ -1,0 +1,14 @@
+# DPO alignment of a small CTI->ATT&CK generator (extends P6's data, generatively).
+torch>=2.2
+transformers>=4.44
+trl>=0.11            # DPOTrainer + SFTTrainer (preference optimization)
+peft>=0.12          # LoRA adapters for SFT + DPO
+datasets>=2.19
+accelerate>=0.33
+sentence-transformers>=3.0   # grounding/faithfulness eval (embedding similarity)
+scikit-learn>=1.4   # accuracy / metrics
+mlflow>=2.17,<3     # experiment tracking (before/after)
+numpy>=1.26
+pandas>=2.1
+pyyaml>=6.0
+pytest>=8.0

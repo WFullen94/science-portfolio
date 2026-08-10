@@ -1,0 +1,47 @@
+# detsynth — grounded ATT&CK detection-content generator. Single source of truth.
+# Phase 1: ground on real ATT&CK v17 analytics -> generate a 4-part detection pack.
+# Phase 2: DPO-align the generator to prefer faithful packs over hallucinated ones.
+
+project_name: detsynth-attack
+
+# --- Grounding: ATT&CK STIX bundle (reused from P6) --------------------------
+stix:
+  bundle: /Users/waynefullen/science-portfolio/project-6-lora/data/enterprise-attack.json
+  cache: data/techniques.jsonl        # per-technique grounding (desc, platforms, analytics)
+
+# --- Generator model (the tool): bigger = more faithful. 7B fp16 fits 36GB M3. --
+# For real detection work swap in a larger local model or an API backend.
+model:
+  base: Qwen/Qwen2.5-7B-Instruct      # strong pack quality; fp16 ~15GB on MPS
+  dtype: float16
+  device: null                        # null -> auto (mps > cuda > cpu)
+  max_new_tokens: 400
+  temperature: 0.5                    # low: grounded, not creative
+
+# --- Alignment model (Phase 2 DPO): must be TRAINABLE on MPS -----------------
+# The DPO faithfulness before/after runs on this smaller model (7B can't train on
+# MPS); it isolates what preference alignment buys, independent of model size.
+align:
+  base: Qwen/Qwen2.5-1.5B-Instruct
+  dtype: float32
+  seed: 42
+  prefs_dir: data/align_prefs
+  max_train: 700           # SFT/DPO training techniques (MPS tractability)
+  n_test: 120              # held-out techniques for the faithfulness margin eval
+  # SFT (teach faithful telemetry format)
+  sft: {lora_r: 16, lora_alpha: 32, lora_dropout: 0.05,
+        target_modules: [q_proj, k_proj, v_proj, o_proj],
+        epochs: 1, batch_size: 8, grad_accum: 2, lr: 2.0e-4, out_dir: data/ckpt_sft}
+  # DPO (prefer faithful over confusable)
+  dpo: {beta: 0.1, epochs: 1, batch_size: 4, grad_accum: 2, lr: 5.0e-6, out_dir: data/ckpt_dpo}
+  max_new_tokens: 200
+
+# --- Generation: the 4-part detection pack -----------------------------------
+generate:
+  out_dir: data/packs
+  max_analytics: 4                    # cap grounding analytics fed per technique
+  artifacts: [procedures, telemetry, sigma, fixtures]
+
+mlflow:
+  tracking_uri: sqlite:///mlflow.db
+  experiment: detsynth-attack
