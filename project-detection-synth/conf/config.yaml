@@ -47,6 +47,27 @@ generate:
   max_analytics: 4                    # cap grounding analytics fed per technique
   artifacts: [procedures, telemetry, sigma, fixtures]
 
+# --- Capstone: incident -> technique mapping -> incident-conditioned pack ------
+# Retrieval over the SAME 697-technique grounding stix.py already extracts (not the
+# P6 classifier, which only covers its 20 trained labels) so mapping generalizes to
+# everything the generator can produce a faithful pack for.
+incident:
+  embed_model: sentence-transformers/all-MiniLM-L6-v2
+  top_k: 3                       # candidates returned by mapping
+  # HONEST CALIBRATION (see incident_eval.py / README): top-1 mean similarity when
+  # correct is 0.498, when WRONG is 0.465 — a ~0.03 gap with heavy overlap. This is a
+  # WEAK signal, not a reliable gate. Tried enriching the retrieval doc with analytic
+  # text (worse: 22.7%->17.7% top-1) and cross-encoder reranking (no improvement) —
+  # neither helped. Treat this threshold as a rough hint, not a safety guarantee:
+  # `/incident` always returns top-k candidates; auto-generation requires an explicit
+  # opt-in AND is still clearly flagged as provisional, regardless of score.
+  confidence_threshold: 0.50
+  # Eval data: P6's held-out CTI procedure test split (short adversary-behavior text +
+  # gold ATT&CK label) — same task shape as "incident text -> technique", no new
+  # labeling needed. Covers P6's original 20-technique subset, not the full 697.
+  p6_csv: /Users/waynefullen/science-portfolio/project-6-lora/data/cti_dataset.csv
+  eval_max_items: 300
+
 mlflow:
   tracking_uri: sqlite:///mlflow.db
   experiment: detsynth-attack

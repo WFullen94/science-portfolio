@@ -39,7 +39,13 @@ one project shipped before the next is opened. Derived from
   the hallucinations a 1.5B makes. *Phase 2:* unblocked (pinned transformers 4.46/TRL 0.12/peft 0.13
   — the bleeding-edge stack hung on MPS) and run — DPO improved the metric it optimizes (grounding
   margin 0.079→0.089) but that gain didn't transfer to an independent platform-faithfulness check
-  (1.00→0.97), the honest circularity result. *Shipped.* Next: item 13's "incident → pack" capstone
+  (1.00→0.97), the honest circularity result. *Capstone:* composed it with retrieval + P6's problem
+  shape into "incident → pack" — map an incident to candidate techniques (retrieval over all 697
+  grounded techniques, not just P6's 20), then generate a pack conditioned on the incident's
+  specifics. Measured mapping honestly (23% top-1; two standard fixes — analytic-text enrichment,
+  cross-encoder rerank — didn't help) and let that number drive the serving design: human
+  confirmation required by default, auto-generate only on explicit opt-in and always labeled
+  provisional. *Shipped, all phases complete.*
   (map incident→technique via P6/retrieval, condition generation on the incident, reuse this DPO).
 - 🟡 **Autonomous cyber-defense RL (CAGE / CybORG)** — *added, gated*: an RL agent defends a
   simulated network. On-domain (threat defense as sequential decision-making); CPU-trainable here.

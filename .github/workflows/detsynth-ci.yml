@@ -21,12 +21,13 @@ jobs:
         with:
           python-version: '3.12'
 
-      # Grounding + formatting tests are pure — no torch/transformers or STIX download
-      # needed. Install a minimal set so CI is fast; model/generation verified locally.
+      # Grounding/format/mapping tests are pure — no torch/transformers, no
+      # sentence-transformers download, no STIX download needed. Install a minimal
+      # set so CI is fast; model/generation/serving verified locally.
       - name: Install (minimal)
         run: |
           python -m pip install --upgrade pip
-          pip install pyyaml pytest
+          pip install pyyaml pytest numpy
           pip install -e . --no-deps
 
       - name: Run tests

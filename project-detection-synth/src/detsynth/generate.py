@@ -59,9 +59,10 @@ def _grounding_block(rec: dict, max_analytics: int) -> str:
     return "\n".join(lines)
 
 
-def _gen(model, tok, device, grounding: str, instruction: str, max_new_tokens: int, temp: float) -> str:
+def _gen(model, tok, device, grounding: str, instruction: str, max_new_tokens: int, temp: float,
+        system: str = SYSTEM) -> str:
     import torch
-    messages = [{"role": "system", "content": SYSTEM},
+    messages = [{"role": "system", "content": system},
                 {"role": "user", "content": f"{grounding}\n\nTASK: {instruction}"}]
     enc = tok.apply_chat_template(messages, add_generation_prompt=True,
                                   return_tensors="pt", return_dict=True)
@@ -105,7 +106,10 @@ def _load_grounding(cfg):
 def pack_to_markdown(pack: dict) -> str:
     md = [f"# Detection pack — {pack['technique_id']} {pack['name']}",
           f"*Platforms: {', '.join(pack['platforms'])} · grounded on "
-          f"{pack['grounded_on_analytics']} MITRE analytic(s)*\n"]
+          f"{pack['grounded_on_analytics']} MITRE analytic(s)*"]
+    if pack.get("incident_excerpt"):
+        md.append(f"\n> **Incident:** {pack['incident_excerpt']}")
+    md.append("")
     titles = {"procedures": "Example procedures", "telemetry": "Detection telemetry",
               "sigma": "Sigma rule (starter)", "fixtures": "Test fixtures"}
     for art, body in pack["artifacts"].items():
