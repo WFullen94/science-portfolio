@@ -56,20 +56,40 @@ The same pack, same grounding, two model sizes:
 work, `model.base` is one config line — point it at a larger local or API model. The generator is
 model-agnostic; bigger = more faithful.
 
-## Phase 2 — DPO faithfulness alignment (built, blocked on tooling)
+## Phase 2 — DPO faithfulness alignment (run)
 
-The plan: preference-align a *trainable* small model to prefer telemetry faithful to **this**
-technique over a **confusable** one (mined by description embedding), then measure a before/after
-**grounding margin** = sim(gen, correct analytics) − sim(gen, confusable analytics).
+Preference-align a *trainable* 0.5B model to prefer telemetry faithful to **this** technique over a
+**confusable** one, then measure faithfulness two ways on 60 held-out techniques. Pipeline:
+constructed preference pairs — chosen = this technique's telemetry, rejected = its nearest-confusable
+technique's (e.g. *MMC* vs *Regsvcs/Regasm*) — → LoRA **SFT** → LoRA **DPO** (β=0.1) → 3-way eval
+([align_data.py](src/detsynth/align_data.py) · [sft.py](src/detsynth/sft.py) ·
+[dpo.py](src/detsynth/dpo.py) · [evaluate.py](src/detsynth/evaluate.py)).
 
-- Preference data + SFT + DPO + the faithfulness eval are all written
-  ([align_data.py](src/detsynth/align_data.py), [sft.py](src/detsynth/sft.py),
-  [dpo.py](src/detsynth/dpo.py), [evaluate.py](src/detsynth/evaluate.py)); the confusable-pair mining
-  works (e.g. *MMC* vs *Regsvcs/Regasm* — same binary-proxy family).
-- **Blocked:** the installed bleeding-edge stack (TRL 0.29 + transformers 5.x) **hangs at 0% CPU on
-  MPS** inside `SFTTrainer`/`DPOTrainer` — no training step fires (confirmed across MPS and CPU, 1.5B
-  and 0.5B). The fix is a **pinned, known-good stack** (transformers ~4.46 + a matching TRL) and a
-  re-run; the code is ready. Documented honestly rather than faked.
+| model | grounding margin | faithful-rate | platform-faithful |
+|---|---|---|---|
+| base (0.5B) | 0.079 | 0.80 | **1.00** |
+| SFT | 0.086 | 0.87 | 0.97 |
+| DPO | 0.089 | 0.88 | 0.97 |
+
+*margin = sim(gen, correct analytics) − sim(gen, confusable) — the metric DPO is aligned toward.
+platform-faithful = fraction of outputs leaking no wrong-OS signal (e.g. a macOS tool on a Windows
+technique) — an **independent** check, not derived from the training text.*
+
+**The honest read — and the point of the exercise:** on the metric DPO *optimizes* (margin /
+faithful-rate), it improves monotonically base → SFT → DPO. But on the **independent** platform check
+there's **no gain — a slight regression** (base was already 100%). So **DPO moved the proxy it
+optimizes, but the gain didn't transfer to an independent faithfulness measure** — exactly the
+circularity risk the platform metric was built to expose. Combined with the 1.5B-vs-7B result above,
+the defensible conclusion is that **for this task, model size dominates alignment**: a 7B fixes the
+hallucinations a small model makes, while DPO on a 0.5B yields only a small proxy improvement that
+doesn't robustly transfer. A larger trainable model, real (non-synthetic) preferences, and an
+LLM-judge groundedness metric would all be needed to push this further — that's the honest next step,
+not a rigged "DPO wins."
+
+> **Reproducing:** DPO training needs a pinned stack — `transformers 4.46 + TRL 0.12 + peft 0.13`
+> (the bleeding-edge TRL 0.29 / transformers 5.x hangs on MPS). Small batches + per-step
+> `mps.empty_cache()` keep the 151k-vocab LM head within Apple-Silicon memory. See
+> [requirements-align.txt](requirements-align.txt).
 
 ## Layout
 
@@ -92,5 +112,6 @@ tests/                      STIX-grounding + formatting tests (pure, no model/ne
 > detection pack — procedures, telemetry, a Sigma starter, and test fixtures — per technique, with
 > every artifact traceable to a real MITRE detection fact so hallucinations are detectable. I showed
 > model size is the dominant faithfulness lever (a 7B fixes wrong-Event-ID / wrong-OS errors a 1.5B
-> makes), and built a DPO faithfulness-alignment experiment on top (blocked only by a bleeding-edge
-> library incompatibility on Apple Silicon, not the method)."
+> makes), then ran a DPO faithfulness-alignment experiment with an *independent* eval metric — and
+> found DPO improved the metric it optimizes but that gain didn't transfer to the independent check,
+> which is the more defensible, less-rigged result than a clean 'DPO wins' would have been."

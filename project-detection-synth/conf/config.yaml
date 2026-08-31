@@ -22,19 +22,24 @@ model:
 # The DPO faithfulness before/after runs on this smaller model (7B can't train on
 # MPS); it isolates what preference alignment buys, independent of model size.
 align:
-  base: Qwen/Qwen2.5-1.5B-Instruct
+  # DPO experiment runs on 0.5B for MPS tractability (fp32 training). This isolates
+  # what *alignment* buys; the generator/tool uses the 7B (model.base). The finding
+  # that model size >> alignment for faithfulness makes 0.5B an honest demo choice.
+  base: Qwen/Qwen2.5-0.5B-Instruct
   dtype: float32
   seed: 42
   prefs_dir: data/align_prefs
-  max_train: 700           # SFT/DPO training techniques (MPS tractability)
-  n_test: 120              # held-out techniques for the faithfulness margin eval
-  # SFT (teach faithful telemetry format)
+  max_train: 200           # SFT/DPO training techniques (MPS tractability)
+  n_test: 60               # held-out techniques for the faithfulness margin eval
+  # SFT (teach faithful telemetry format). Small batch: the LM head over Qwen's 151k
+  # vocab makes per-step logits large; batch 4 + empty_cache each step keeps MPS bounded.
   sft: {lora_r: 16, lora_alpha: 32, lora_dropout: 0.05,
         target_modules: [q_proj, k_proj, v_proj, o_proj],
-        epochs: 1, batch_size: 8, grad_accum: 2, lr: 2.0e-4, out_dir: data/ckpt_sft}
-  # DPO (prefer faithful over confusable)
-  dpo: {beta: 0.1, epochs: 1, batch_size: 4, grad_accum: 2, lr: 5.0e-6, out_dir: data/ckpt_dpo}
-  max_new_tokens: 200
+        epochs: 1, batch_size: 4, grad_accum: 4, lr: 2.0e-4, out_dir: data/ckpt_sft}
+  # DPO (prefer faithful over confusable). Small batch: DPO log_softmax over the 151k
+  # vocab for concatenated chosen+rejected is memory-heavy; batch 2 keeps MPS in bounds.
+  dpo: {beta: 0.1, epochs: 1, batch_size: 2, grad_accum: 4, lr: 5.0e-6, out_dir: data/ckpt_dpo}
+  max_new_tokens: 160
 
 # --- Generation: the 4-part detection pack -----------------------------------
 generate:

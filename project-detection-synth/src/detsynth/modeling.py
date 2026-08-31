@@ -27,8 +27,27 @@ def load_model(path_or_name: str, device: str, dtype: str = "float32"):
     from transformers import AutoModelForCausalLM
     dt = {"float32": torch.float32, "float16": torch.float16,
           "bfloat16": torch.bfloat16}[dtype]
-    model = AutoModelForCausalLM.from_pretrained(path_or_name, dtype=dt)
+    # transformers 5.x uses `dtype=`; 4.x uses `torch_dtype=`. Support both so the
+    # project runs on either (Phase 1 ran on 5.x; the DPO stack pins 4.x).
+    try:
+        model = AutoModelForCausalLM.from_pretrained(path_or_name, dtype=dt)
+    except TypeError:
+        model = AutoModelForCausalLM.from_pretrained(path_or_name, torch_dtype=dt)
     return model.to(device)
+
+
+def mps_empty_cache_callback():
+    """Free MPS cached memory each step — TRL/Trainer don't, so it accumulates and OOMs
+    on Apple Silicon with a large-vocab LM head. A small speed cost buys a stable run."""
+    import torch
+    from transformers import TrainerCallback
+
+    class _Cb(TrainerCallback):
+        def on_step_end(self, args, state, control, **kw):
+            if torch.backends.mps.is_available():
+                torch.mps.empty_cache()
+
+    return _Cb()
 
 
 def lora_config(block: dict):

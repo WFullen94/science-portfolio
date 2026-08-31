@@ -1,0 +1,20 @@
+# Pinned stack for Phase 2 (SFT + DPO training) — DO NOT use requirements.txt's
+# unpinned versions for this path. TRL 0.29 + transformers 5.x HANGS at 0% CPU inside
+# SFTTrainer/DPOTrainer on Apple Silicon (MPS) — no training step ever fires, confirmed
+# across MPS and CPU, 1.5B and 0.5B models. These exact versions are verified working:
+# a full SFT -> DPO -> 3-way eval run completed cleanly with them (see README results).
+#
+#   pip install -r requirements-align.txt   # in place of / after requirements.txt
+transformers==4.46.3
+trl==0.12.2
+peft==0.13.2
+accelerate==1.1.1
+torch>=2.2
+datasets>=2.19
+sentence-transformers>=3.0   # grounding/faithfulness eval (embedding similarity)
+scikit-learn>=1.4
+mlflow>=2.17,<3
+numpy>=1.26
+pandas>=2.1
+pyyaml>=6.0
+pytest>=8.0

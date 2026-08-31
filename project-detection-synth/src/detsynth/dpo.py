@@ -9,9 +9,9 @@ loss. Trains a fresh LoRA on top of the merged SFT model.
 from __future__ import annotations
 
 from detsynth.config import load_config, resolve
-from detsynth.modeling import load_tokenizer, lora_config, pick_device
+from detsynth.modeling import load_tokenizer, lora_config, mps_empty_cache_callback, pick_device
 
-MAX_LEN = 512
+MAX_LEN = 320
 
 
 def run(cfg=None, sft_model_dir: str | None = None, max_examples: int | None = None) -> str:
@@ -41,7 +41,7 @@ def run(cfg=None, sft_model_dir: str | None = None, max_examples: int | None = N
     # ref_model=None + peft_config: the adapter-disabled model (= merged SFT) is the
     # frozen reference, so no second full model is held in memory.
     trainer = DPOTrainer(model=base, ref_model=None, args=args, train_dataset=ds,
-                         processing_class=tok, peft_config=lora_config(acfg["sft"]))
+                         processing_class=tok, peft_config=lora_config(acfg["sft"]), callbacks=[mps_empty_cache_callback()])
     trainer.train()
     trainer.save_model(str(out))
     tok.save_pretrained(str(out))
