@@ -1,0 +1,8 @@
+# Slimmer serving deps (the /predict container) — ONNX Runtime inference, no torch.
+onnxruntime>=1.18
+fastapi>=0.111
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+pillow>=10.0
+numpy>=1.26
+pyyaml>=6.0

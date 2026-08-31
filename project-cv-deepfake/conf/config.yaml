@@ -1,0 +1,54 @@
+# CV survey #1 — deepfake / synthetic-face detection. Single source of truth.
+
+project_name: dfdetect
+
+# --- Dataset -------------------------------------------------------------------
+# pujanpaudel/deepfake_face_classification (HF Hub, CC BY-NC 4.0, not gated) — derived
+# from DF40 (40 distinct real deepfake generation techniques), balanced real/fake.
+# We deliberately use ONLY val.zip + test.zip (6,424 images, ~1.47GB) and skip
+# train.rar (3.9GB, RAR format — an extra system dependency) — see README for the
+# rationale. val.zip becomes our working train/val pool; test.zip is held out
+# untouched as the true test set (never seen during training or model selection).
+dataset:
+  name: deepfake_face_classification (HF, subset)
+  license: CC BY-NC 4.0 — non-commercial
+  base_url: https://huggingface.co/datasets/pujanpaudel/deepfake_face_classification/resolve/main
+  # These become our train/val pool (re-split 80/20 below).
+  pool_zip: val.zip
+  # This is the untouched held-out test set.
+  test_zip: test.zip
+  raw_dir: data/raw
+  # Cap for tractability + a tiny bundled sample for CI (never needs the real download).
+  max_per_class: null        # null = use everything in the pool
+  sample_per_class: 4        # tiny CI/smoke sample
+
+split:
+  val_fraction: 0.2          # carved from the pool (val.zip), stratified
+  random_state: 42
+
+# --- Model: fine-tune a pretrained EfficientNet-B0 as a binary classifier ------
+model:
+  backbone: efficientnet_b0   # torchvision, ImageNet-pretrained
+  img_size: 224
+  device: null                 # null -> auto (mps > cuda > cpu)
+
+train:
+  epochs: 6
+  batch_size: 32
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+  freeze_backbone_epochs: 1    # warm up the new head before unfreezing the backbone
+  patience: 3                  # early stop on val AUC
+  random_state: 42
+  ckpt_dir: data/ckpt
+
+eval:
+  threshold: 0.5
+
+# --- Serving ---------------------------------------------------------------
+serve:
+  onnx: data/dfdetect.onnx
+
+mlflow:
+  tracking_uri: sqlite:///mlflow.db
+  experiment: dfdetect

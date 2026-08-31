@@ -78,6 +78,27 @@ called out — breadth here is about engineering shape, not just another model.
   streaming anomaly detection, contextual bandits (adaptive triage), CTI→knowledge-graph construction
   from raw reports, feature store + train/serve parity.
 
+### CV learning survey (gated — 8 domains, full production per domain)
+
+Explicit learning goal, not roadmap-required: real data → real training → honest eval → **full
+production treatment** (serving + Docker + CI, matching P7/detsynth), one **top-level project per
+domain** (`project-cv-<domain>/`), not a shared umbrella. Recommended order (low-friction/foundational
+→ higher-friction/complex, security-relevant ones threaded throughout, not clustered):
+
+| # | Domain | Dataset | Status |
+|---|---|---|---|
+| 1 | Deepfake / synthetic-image detection | `pujanpaudel/deepfake_face_classification` (HF, derived from DF40 — 40 generation techniques). DFDC needs Kaggle competition-agreement access (no CLI creds here); used val.zip+test.zip only, skipped train.rar (RAR format) | ✅ **shipped** — [project-cv-deepfake](project-cv-deepfake/): EfficientNet-B0 fine-tune, held-out test ROC-AUC 0.9963 / F1 0.9772, honest failure-case analysis (a JPEG-vs-PNG format confound), ONNX-served, Docker, CI |
+| 2 | Change detection | LEVIR-CD (satellite before/after pairs) | ⬜ planned |
+| 3 | Self-supervised representation learning | STL-10 (zero-friction) | ⬜ planned |
+| 4 | Semantic segmentation | Pascal VOC / CamVid | ⬜ planned |
+| 5 | Monocular depth estimation | NYU Depth V2 (labeled subset) | ⬜ planned |
+| 6 | Medical imaging classification | ChestX-ray14 | ⬜ planned |
+| 7 | Video anomaly detection | UCF-Crime | ⬜ planned |
+| 8 | Multi-object tracking | MOT17/20 (needs a free account — most friction, saved for last) | ⬜ planned |
+
+*Order is a default, resequence freely. Each domain ships independently — same "ship before adding"
+rule applies here as everywhere else in this plan.*
+
 ## Sequence
 
 | # | Project | Type | Key skills | Reuses |
