@@ -27,7 +27,7 @@ jobs:
       - name: Install (minimal)
         run: |
           python -m pip install --upgrade pip
-          pip install pyyaml pytest numpy pillow
+          pip install pyyaml pytest numpy pillow requests
           pip install -e . --no-deps
 
       - name: Run tests

@@ -87,7 +87,7 @@ domain** (`project-cv-<domain>/`), not a shared umbrella. Recommended order (low
 
 | # | Domain | Dataset | Status |
 |---|---|---|---|
-| 1 | Deepfake / synthetic-image detection | `pujanpaudel/deepfake_face_classification` (HF, derived from DF40 — 40 generation techniques). DFDC needs Kaggle competition-agreement access (no CLI creds here); used val.zip+test.zip only, skipped train.rar (RAR format) | ✅ **shipped** — [project-cv-deepfake](project-cv-deepfake/): EfficientNet-B0 fine-tune, held-out test ROC-AUC 0.9963 / F1 0.9772, honest failure-case analysis (a JPEG-vs-PNG format confound), ONNX-served, Docker, CI |
+| 1 | Deepfake / synthetic-image detection | `pujanpaudel/deepfake_face_classification` (HF, derived from DF40 — 40 generation techniques). DFDC needs Kaggle competition-agreement access (no CLI creds here); used val.zip+test.zip only, skipped train.rar (RAR format) | ✅ **shipped** — [project-cv-deepfake](project-cv-deepfake/): 5-model head-to-head (EfficientNet-B0/ResNet50/ConvNeXt-Tiny/Xception fine-tuned + a CLIP linear probe) — clean accuracy statistically tied across the 4 CNNs (0.994-0.996 ROC-AUC), CLIP probe clearly weaker (0.885). The real finding was in a robustness eval (JPEG/blur/downscale/noise — substituted for an infeasible leave-one-generator-out test): EfficientNet-B0's clean "win" collapses under noise (0.999→0.904) while ResNet50, tied on clean data, barely moves (0.9982) — re-pointed the served model to ResNet50 on that evidence. ONNX-served, Docker, CI |
 | 2 | Change detection | LEVIR-CD (satellite before/after pairs) | ⬜ planned |
 | 3 | Self-supervised representation learning | STL-10 (zero-friction) | ⬜ planned |
 | 4 | Semantic segmentation | Pascal VOC / CamVid | ⬜ planned |

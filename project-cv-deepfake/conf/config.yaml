@@ -26,9 +26,17 @@ split:
   val_fraction: 0.2          # carved from the pool (val.zip), stratified
   random_state: 42
 
-# --- Model: fine-tune a pretrained EfficientNet-B0 as a binary classifier ------
+# --- Model: fine-tune a pretrained CNN as a binary classifier -----------------
+# resnet50, not the initial efficientnet_b0 pick: the architecture head-to-head
+# (compare.py) found all 4 fine-tuned CNNs statistically tied on CLEAN accuracy
+# (0.994-0.996 ROC-AUC), but the robustness eval (robustness_eval.py) found resnet50
+# far more robust to real-world degradation (noise, blur, downscale) than the others
+# -- notably efficientnet_b0's own clean-AUC "win" crashes under noise (0.999->0.904)
+# while resnet50 barely moves (0.9999->0.998). Robustness, not clean AUC, is what
+# should drive the SERVED model -- see README for the full table.
 model:
-  backbone: efficientnet_b0   # torchvision, ImageNet-pretrained
+  backbone: resnet50           # torchvision, ImageNet-pretrained. See BACKBONES in
+                                # modeling.py for the other 3 fine-tuned alternatives.
   img_size: 224
   device: null                 # null -> auto (mps > cuda > cpu)
 

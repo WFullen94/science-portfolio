@@ -1,4 +1,4 @@
-.PHONY: setup data train eval export serve test docker-build clean
+.PHONY: setup data train eval export serve test compare robustness docker-build clean
 
 setup:
 	/opt/homebrew/bin/python3.12 -m venv .venv
@@ -6,11 +6,16 @@ setup:
 		python -m pip install -r requirements.txt && python -m pip install -e .
 
 data:   ; . .venv/bin/activate && python -m dfdetect.data            # download + verify + CI sample
-train:  ; . .venv/bin/activate && python -m dfdetect.train           # fine-tune EfficientNet-B0
+train:  ; . .venv/bin/activate && python -m dfdetect.train           # fine-tune the configured backbone
 eval:   ; . .venv/bin/activate && python -m dfdetect.evaluate        # score on held-out test.zip
 export: ; . .venv/bin/activate && python -m dfdetect.export_onnx     # -> data/dfdetect.onnx
 serve:  ; . .venv/bin/activate && uvicorn dfdetect.serve:app --reload
 test:   ; . .venv/bin/activate && pytest -q                          # split/leakage tests (no model)
+
+# Architecture comparison: 4 fine-tuned CNNs + a CLIP linear probe, identical split.
+compare:    ; . .venv/bin/activate && python -m dfdetect.compare
+# Distribution-shift robustness: JPEG/blur/downscale/noise, all trained models.
+robustness: ; . .venv/bin/activate && python -m dfdetect.robustness_eval
 
 docker-build: ; docker build -f docker/Dockerfile -t dfdetect .
 

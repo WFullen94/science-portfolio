@@ -1,9 +1,14 @@
-"""Stage 2 — Train: fine-tune EfficientNet-B0 as a real/fake face classifier.
+"""Stage 2 — Train: fine-tune a CNN backbone as a real/fake face classifier.
 
 Two-stage fine-tune: warm up the new classifier head with the backbone frozen for
 `freeze_backbone_epochs`, then unfreeze the whole network — the standard transfer-
 learning recipe (an untrained head would otherwise send large, destructive gradients
 through the pretrained backbone in the first steps). Early-stops on validation ROC-AUC.
+
+`backbone` is an explicit argument (default: cfg["model"]["backbone"]) so compare.py
+can train several architectures on the IDENTICAL data split (list_items/
+stratified_split are deterministic given the same seed) — same split, different model,
+a fair comparison. Each backbone gets its own checkpoint subdirectory.
 """
 
 from __future__ import annotations
@@ -19,7 +24,7 @@ from dfdetect.config import load_config, resolve
 from dfdetect.data import list_items, prepare, stratified_split
 from dfdetect.dataset import FaceDataset
 from dfdetect.metrics import binary_metrics
-from dfdetect.modeling import build_model, pick_device, set_backbone_trainable
+from dfdetect.modeling import BACKBONES, build_model, pick_device, set_backbone_trainable
 
 
 @torch.no_grad()
@@ -34,9 +39,10 @@ def _scores(model, loader, device) -> tuple[np.ndarray, np.ndarray]:
     return np.concatenate(ys), np.concatenate(scores)
 
 
-def run(cfg=None, log_to_mlflow: bool = True) -> dict:
+def run(cfg=None, backbone: str | None = None, log_to_mlflow: bool = True) -> dict:
     cfg = cfg or load_config()
     mcfg, tcfg = cfg["model"], cfg["train"]
+    backbone = backbone or mcfg["backbone"]
     device = pick_device(mcfg["device"])
     torch.manual_seed(tcfg["random_state"])
 
@@ -44,14 +50,14 @@ def run(cfg=None, log_to_mlflow: bool = True) -> dict:
     items = list_items(paths["pool"], cfg["dataset"]["max_per_class"])
     train_items, val_items = stratified_split(items, cfg["split"]["val_fraction"],
                                               cfg["split"]["random_state"])
-    print(f"[train] pool split: train={len(train_items)} val={len(val_items)}")
+    print(f"[train] backbone={backbone}  pool split: train={len(train_items)} val={len(val_items)}")
 
     train_ds = FaceDataset(train_items, mcfg["img_size"], augment=True)
     val_ds = FaceDataset(val_items, mcfg["img_size"], augment=False)
     train_loader = DataLoader(train_ds, batch_size=tcfg["batch_size"], shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=tcfg["batch_size"], shuffle=False)
 
-    model = build_model(mcfg["backbone"]).to(device)
+    model = build_model(backbone).to(device)
     loss_fn = nn.BCEWithLogitsLoss()
     opt = torch.optim.AdamW(model.parameters(), lr=tcfg["lr"], weight_decay=tcfg["weight_decay"])
 
@@ -86,7 +92,7 @@ def run(cfg=None, log_to_mlflow: bool = True) -> dict:
     if best_state is not None:
         model.load_state_dict(best_state)
 
-    ckpt = resolve(tcfg["ckpt_dir"])
+    ckpt = resolve(tcfg["ckpt_dir"]) / backbone
     ckpt.mkdir(parents=True, exist_ok=True)
     torch.save(model.state_dict(), ckpt / "best.pt")
     print(f"[train] saved best checkpoint -> {ckpt / 'best.pt'}")
@@ -96,21 +102,25 @@ def run(cfg=None, log_to_mlflow: bool = True) -> dict:
             import mlflow
             mlflow.set_tracking_uri(cfg["mlflow"]["tracking_uri"])
             mlflow.set_experiment(cfg["mlflow"]["experiment"])
-            with mlflow.start_run(run_name="efficientnet_b0-finetune"):
-                mlflow.log_params({"backbone": mcfg["backbone"], "epochs": tcfg["epochs"],
+            with mlflow.start_run(run_name=f"{backbone}-finetune"):
+                mlflow.log_params({"backbone": backbone, "epochs": tcfg["epochs"],
                                    "lr": tcfg["lr"], "batch_size": tcfg["batch_size"]})
                 mlflow.log_metric("best_val_roc_auc", best_auc)
         except Exception as exc:
             print(f"[train] mlflow logging skipped: {exc}")
 
-    result = {"best_val_roc_auc": best_auc, "checkpoint": str(ckpt / "best.pt")}
+    result = {"backbone": backbone, "best_val_roc_auc": best_auc, "checkpoint": str(ckpt / "best.pt")}
     (resolve("data/reports")).mkdir(parents=True, exist_ok=True)
-    (resolve("data/reports") / "train_result.json").write_text(json.dumps(result, indent=2))
+    (resolve("data/reports") / f"train_result_{backbone}.json").write_text(json.dumps(result, indent=2))
     return result
 
 
 def main() -> int:
-    run()
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--backbone", default=None, choices=BACKBONES)
+    args = ap.parse_args()
+    run(backbone=args.backbone)
     return 0
 
 

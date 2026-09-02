@@ -8,11 +8,12 @@ from dfdetect.config import load_config, resolve
 from dfdetect.modeling import build_model
 
 
-def run(cfg=None) -> str:
+def run(cfg=None, backbone: str | None = None) -> str:
     cfg = cfg or load_config()
     mcfg, tcfg = cfg["model"], cfg["train"]
-    model = build_model(mcfg["backbone"])
-    ckpt = resolve(tcfg["ckpt_dir"]) / "best.pt"
+    backbone = backbone or mcfg["backbone"]
+    model = build_model(backbone)
+    ckpt = resolve(tcfg["ckpt_dir"]) / backbone / "best.pt"
     model.load_state_dict(torch.load(ckpt, map_location="cpu"))
     model.eval()
 
