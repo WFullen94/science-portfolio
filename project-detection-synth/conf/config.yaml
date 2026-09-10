@@ -4,9 +4,12 @@
 
 project_name: detsynth-attack
 
-# --- Grounding: ATT&CK STIX bundle (reused from P6) --------------------------
+# --- Grounding: ATT&CK STIX bundle -------------------------------------------
+# Project-relative path, auto-downloaded on first use if missing (see stix.py
+# _ensure_bundle) — no dependency on another project's copy, portable to any machine.
 stix:
-  bundle: /Users/waynefullen/science-portfolio/project-6-lora/data/enterprise-attack.json
+  bundle: data/enterprise-attack.json
+  download_url: https://raw.githubusercontent.com/mitre-attack/attack-stix-data/master/enterprise-attack/enterprise-attack.json
   cache: data/techniques.jsonl        # per-technique grounding (desc, platforms, analytics)
 
 # --- Generator model (the tool): bigger = more faithful. 7B fp16 fits 36GB M3. --

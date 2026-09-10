@@ -15,8 +15,28 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
+from pathlib import Path
 
 from detsynth.config import load_config, resolve
+
+
+def _ensure_bundle(cfg) -> Path:
+    """Download the public ATT&CK STIX bundle if the configured path doesn't exist
+    locally (e.g. on a fresh machine that doesn't have P6's copy). The bundle is
+    public — no auth needed — so this makes the project self-contained.
+    """
+    path = resolve(cfg["stix"]["bundle"])
+    if path.exists():
+        return path
+    import requests
+
+    url = cfg["stix"]["download_url"]
+    print(f"[stix] {path} not found locally — downloading from {url}")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    data = requests.get(url, timeout=120).json()
+    path.write_text(json.dumps(data))
+    print(f"[stix] cached bundle -> {path}")
+    return path
 
 
 def _mitre_id(obj: dict) -> str | None:
@@ -32,7 +52,7 @@ def _live(obj: dict) -> bool:
 
 def build_grounding(cfg=None) -> dict[str, dict]:
     cfg = cfg or load_config()
-    bundle = json.loads(resolve(cfg["stix"]["bundle"]).read_text())
+    bundle = json.loads(_ensure_bundle(cfg).read_text())
     objs = bundle["objects"]
     by_id = {o["id"]: o for o in objs if "id" in o}
 
